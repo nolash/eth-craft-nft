@@ -79,7 +79,7 @@ contract CraftNFT {
 		return -1;
 	}
 
-	function mintTo(bytes32 _content, address _recipient) public returns (bytes32) {
+	function mintTo(address _recipient, bytes32 _content) public returns (bytes32) {
 		uint256 right;
 		require(mintedToken[_content] == bytes32(0x00));
 
@@ -104,7 +104,7 @@ contract CraftNFT {
 		mintedToken[_k] = bytes32(_data);
 	}
 
-	function mintFromBatchTo(bytes32 _content, uint256 _batch, address _recipient) public returns (bytes32) {
+	function mintFromBatchTo(address _recipient, bytes32 _content, uint256 _batch) public returns (bytes32) {
 		uint256 left;
 		uint256 right;
 		tokenSpec storage spec;
@@ -112,7 +112,7 @@ contract CraftNFT {
 		spec = token[_content][_batch];
 		if (_batch == 0 && spec.count == 0) {
 			spec.cursor += 1;
-			return mintTo(_content, _recipient);
+			return mintTo(_recipient, _content);
 		}
 		require(spec.cursor < spec.count);
 
@@ -202,6 +202,50 @@ contract CraftNFT {
 		emit Transfer(_from, _to, _tokenId);
 	}
 
+	// create sha256 scheme URI from tokenId
+	function toURI(bytes32 _data) public pure returns(string memory) {
+		bytes memory out;
+		uint8 t;
+		uint256 c;
+
+		out = new bytes(64 + 7);
+		out[0] = "s";
+		out[1] = "h";
+		out[2] = "a";
+		out[3] = "2";
+		out[4] = "5";
+		out[5] = "6";
+		out[6] = ":";
+		
+		c = 7;	
+		for (uint256 i = 0; i < 32; i++) {
+			t = (uint8(_data[i]) & 0xf0) >> 4;
+			if (t < 10) {
+				out[c] = bytes1(t + 0x30);
+			} else {
+				out[c] = bytes1(t + 0x57);
+			}
+			t = uint8(_data[i]) & 0x0f;
+			if (t < 10) {
+				out[c+1] = bytes1(t + 0x30);
+			} else {
+				out[c+1] = bytes1(t + 0x57);
+			}
+			c += 2;
+		}
+		return string(out);
+	}
+
+	// ERC-721 (Metadata - optional)
+	function tokenURI(uint256 _tokenId) public view returns (string memory) {
+		bytes32 digest;
+
+		digest = this.getDigest(bytes32(_tokenId));
+
+		return toURI(digest);
+	}
+
+
 	// EIP-165
 	function supportsInterface(bytes4 interfaceID) external pure returns (bool) {
 		if (interfaceID == 0x80ac58cd) { // EIP 721
@@ -211,6 +255,9 @@ contract CraftNFT {
 			return true;
 		}
 		if (interfaceID == 0x780e9d63) { // EIP 721 (Enumerable - optional)
+			return true;
+		}
+		if (interfaceID == 0x449a52f8) { // Minter
 			return true;
 		}
 		if (interfaceID == 0x01ffc9a7) { // EIP 165

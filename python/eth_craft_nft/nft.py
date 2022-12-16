@@ -131,15 +131,15 @@ class CraftNFT(ERC721):
         return o
 
 
-    def mint_to(self, contract_address, sender_address, token_id, batch, recipient, tx_format=TxFormat.JSONRPC):
+    def mint_to(self, contract_address, sender_address, recipient, token_id, batch, tx_format=TxFormat.JSONRPC):
         enc = ABIContractEncoder()
         enc.method('mintFromBatchTo')
+        enc.typ(ABIContractType.ADDRESS)
         enc.typ(ABIContractType.BYTES32)
         enc.typ(ABIContractType.UINT256)
-        enc.typ(ABIContractType.ADDRESS)
+        enc.address(recipient)
         enc.bytes32(token_id)
         enc.uint256(batch)
-        enc.address(recipient)
         data = enc.get()
         tx = self.template(sender_address, contract_address, use_nonce=True)
         tx = self.set_code(tx, data)
