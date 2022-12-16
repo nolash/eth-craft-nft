@@ -6,6 +6,7 @@ contract CraftNFT {
 	struct tokenSpec {
 		uint8 v;
 		uint48 count;
+		uint48 cumulativeCount;
 		uint48 cursor;
 	}
 	address public owner;
@@ -54,20 +55,25 @@ contract CraftNFT {
 
 	// allocate a batch of tokens
 	function allocate(bytes32 content, uint48 count) public returns (bool) {
+		uint256 l;
+		uint48 _cumulativeCount;
 		require(msg.sender == owner);
 		tokenSpec memory _token;
 
-		if (token[content].length > 0) {
+		l = token[content].length;
+		if (l > 0) {
 			require(token[content][0].count > 0);
+			_cumulativeCount = token[content][l-1].cumulativeCount;
 		}
 
 		_token.count = count;
+		_token.cumulativeCount = _cumulativeCount + count;
 		token[content].push(_token);
 	}
 
 	function batchOf(bytes32 _content, uint256 _superIndex, uint256 _startAt) public view returns(int256) {
 		for (uint256 i = _startAt; i < token[_content].length; i++) {
-			if (token[_content][i].count > uint128(_superIndex)) {
+			if (token[_content][i].cumulativeCount > uint128(_superIndex)) {
 				return int256(i);
 			}
 		}

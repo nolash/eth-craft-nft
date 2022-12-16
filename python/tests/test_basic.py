@@ -95,12 +95,12 @@ class Test(EthTesterCase):
         batch = c.parse_batch_of(r)
         self.assertEqual(batch, 1)
 
-        o = c.batch_of(self.address, hash_of_foo, 19, sender_address=self.accounts[0])
+        o = c.batch_of(self.address, hash_of_foo, 29, sender_address=self.accounts[0])
         r = self.rpc.do(o)
         batch = c.parse_batch_of(r)
         self.assertEqual(batch, 1)
 
-        o = c.batch_of(self.address, hash_of_foo, 20, sender_address=self.accounts[0])
+        o = c.batch_of(self.address, hash_of_foo, 30, sender_address=self.accounts[0])
         r = self.rpc.do(o)
         with self.assertRaises(InvalidBatchError):
             batch = c.parse_batch_of(r)
@@ -149,7 +149,7 @@ class Test(EthTesterCase):
         self.rpc.do(o)
         o = receipt(tx_hash_hex)
         r = self.conn.do(o)
-        self.assertEqual(r['status'], 1)
+        self.assertEqual(r['status'], 0)
 
         (tx_hash_hex, o) = c.mint_to(self.address, self.accounts[0], hash_of_foo, 0, self.accounts[1])
         self.rpc.do(o)
@@ -158,6 +158,12 @@ class Test(EthTesterCase):
         self.assertEqual(r['status'], 1)
 
         (tx_hash_hex, o) = c.mint_to(self.address, self.accounts[0], hash_of_foo, 0, self.accounts[1])
+        self.rpc.do(o)
+        o = receipt(tx_hash_hex)
+        r = self.conn.do(o)
+        self.assertEqual(r['status'], 0)
+
+        (tx_hash_hex, o) = c.mint_to(self.address, self.accounts[0], hash_of_foo, 1, self.accounts[1])
         self.rpc.do(o)
         o = receipt(tx_hash_hex)
         r = self.conn.do(o)
@@ -237,6 +243,31 @@ class Test(EthTesterCase):
         r = self.rpc.do(o) 
         owner = strip_0x(r)
         self.assertTrue(is_same_address(owner[24:], self.accounts[2]))
+
+
+
+    def test_fill_batches(self):
+        nonce_oracle = RPCNonceOracle(self.accounts[0], self.rpc)
+        c = CraftNFT(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
+        (tx_hash_hex, o) = c.allocate(self.address, self.accounts[0], hash_of_foo, amount=6)
+        self.rpc.do(o)
+
+        (tx_hash_hex, o) = c.allocate(self.address, self.accounts[0], hash_of_foo, amount=8)
+        self.rpc.do(o)
+
+        (tx_hash_hex, o) = c.allocate(self.address, self.accounts[0], hash_of_foo, amount=4)
+        self.rpc.do(o)
+
+        for i in range(4+8+6):
+            o = c.batch_of(self.address, hash_of_foo, i, sender_address=self.accounts[0])
+            r = self.rpc.do(o)
+            batch = c.parse_batch_of(r)
+
+            c.mint_to(self.address, self.accounts[0], hash_of_foo, batch, self.accounts[(i%7)+1])
+            r = self.rpc.do(o)
+            o = receipt(tx_hash_hex)
+            r = self.conn.do(o)
+            self.assertEqual(r['status'], 1)
 
 
 if __name__ == '__main__':
