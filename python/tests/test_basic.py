@@ -145,6 +145,12 @@ class Test(EthTesterCase):
         r = self.conn.do(o)
         self.assertEqual(r['status'], 1)
 
+        (tx_hash_hex, o) = c.mint_to(self.address, self.accounts[0], hash_of_foo, 1, self.accounts[1])
+        self.rpc.do(o)
+        o = receipt(tx_hash_hex)
+        r = self.conn.do(o)
+        self.assertEqual(r['status'], 1)
+
         (tx_hash_hex, o) = c.mint_to(self.address, self.accounts[0], hash_of_foo, 0, self.accounts[1])
         self.rpc.do(o)
         o = receipt(tx_hash_hex)
