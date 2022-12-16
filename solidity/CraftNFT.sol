@@ -37,18 +37,27 @@ contract CraftNFT {
 		symbol = _symbol;
 	}
 
-	function isActiveContent(bytes32 _tokenContent) public view returns(bool) {
+	function isActive(bytes32 _tokenContent) private view returns(bool) {
 		return uint256(_tokenContent) & 0x8000000000000000000000000000000000000000000000000000000000000000 > 0;
+	}
+
+	function isSingle(bytes32 _tokenContent) private view returns(bool) {
+		return uint256(_tokenContent) & 0x4000000000000000000000000000000000000000000000000000000000000000 > 0;
 	}
 
 	function getDigest(bytes32 _truncatedId) public view returns (bytes32) {
 		bytes32 digest;
 
 		digest = mintedToken[_truncatedId];
-		require(isActiveContent(digest));
+		require(isActive(digest));
 
-		digest >>= 160;
-		digest |= _truncatedId & 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffff000000;
+		if (isSingle(digest)) {
+			return _truncatedId;
+		}
+
+		digest &= 0x00ffffffffff0000000000000000000000000000000000000000000000000000;
+		digest >>= 208;
+		digest |= _truncatedId & 0xffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000;
 		return digest;
 	}
 
@@ -84,7 +93,7 @@ contract CraftNFT {
 		require(mintedToken[_content] == bytes32(0x00));
 
 		right = uint160(_recipient);
-		right |= (1 << 255);
+		right |= (3 << 254);
 		mintedToken[_content] = bytes32(right);
 
 		return _content;
@@ -116,13 +125,13 @@ contract CraftNFT {
 		}
 		require(spec.cursor < spec.count);
 
-		right = uint256(_content) & ((1 << 48) - 1);
-		right <<= 200;
+		right = uint256(_content) & ((1 << 40) - 1);
+		right <<= 208;
 		right |= (1 << 255);
 		right |= uint160(_recipient);
 
 		left = uint256(_content) & 0xffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000;
-		left |= (_batch << 40);
+		left |= (_batch << 20);
 		left |= spec.cursor;
 
 		spec.cursor += 1;

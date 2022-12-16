@@ -131,6 +131,23 @@ class CraftNFT(ERC721):
         return o
 
 
+    def get_digest(self, contract_address, token_id, sender_address=ZERO_ADDRESS, id_generator=None):
+        j = JSONRPCRequest(id_generator)
+        o = j.template()
+        o['method'] = 'eth_call'
+        enc = ABIContractEncoder()
+        enc.method('getDigest')
+        enc.typ(ABIContractType.BYTES32)
+        enc.bytes32(token_id)
+        data = add_0x(enc.get())
+        tx = self.template(sender_address, contract_address)
+        tx = self.set_code(tx, data)
+        o['params'].append(self.normalize(tx))
+        o['params'].append('latest')
+        o = j.finalize(o)
+        return o
+
+
     def mint_to(self, contract_address, sender_address, recipient, token_id, batch, tx_format=TxFormat.JSONRPC):
         enc = ABIContractEncoder()
         enc.method('mintFromBatchTo')
