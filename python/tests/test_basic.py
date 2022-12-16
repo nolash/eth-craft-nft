@@ -25,6 +25,9 @@ from hexathon import (
         add_0x,
         strip_0x,
         )
+from chainlib.eth.tx import TxFormat
+from chainlib.eth.contract import ABIContractEncoder
+from chainlib.eth.contract import ABIContractType
 
 
 # local imports
@@ -37,6 +40,7 @@ logg = logging.getLogger()
 testdir = os.path.dirname(__file__)
 
 hash_of_foo = '2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae'
+hash_of_bar = 'fcde2b2edba56bf408601fb721fe9b5c338d10ee429ea04fae5511b68fbf8fb9'
 
 class Test(EthTesterCase):
 
@@ -211,6 +215,7 @@ class Test(EthTesterCase):
     def test_mint_to_batch(self):
         nonce_oracle = RPCNonceOracle(self.accounts[0], self.rpc)
         c = CraftNFT(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
+
         (tx_hash_hex, o) = c.allocate(self.address, self.accounts[0], hash_of_foo, amount=10)
         self.rpc.do(o)
 
@@ -243,6 +248,37 @@ class Test(EthTesterCase):
         r = self.rpc.do(o) 
         owner = strip_0x(r)
         self.assertTrue(is_same_address(owner[24:], self.accounts[2]))
+
+
+    def test_mint_to_dup(self):
+        nonce_oracle = RPCNonceOracle(self.accounts[0], self.rpc)
+        c = CraftNFT(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
+
+        (tx_hash_hex, o) = c.allocate(self.address, self.accounts[0], hash_of_foo, amount=10)
+        self.rpc.do(o)
+
+        (tx_hash_hex, o) = c.mint_to(self.address, self.accounts[0], self.accounts[1], hash_of_foo, 0)
+        self.rpc.do(o)
+        o = receipt(tx_hash_hex)
+        r = self.conn.do(o)
+        self.assertEqual(r['status'], 1)
+
+        enc = ABIContractEncoder()
+        enc.method('mintTo')
+        enc.typ(ABIContractType.ADDRESS)
+        enc.typ(ABIContractType.BYTES32)
+        enc.typ(ABIContractType.UINT256)
+        enc.address(self.accounts[1])
+        enc.bytes32(hash_of_foo)
+        enc.uint256(0)
+        data = enc.get()
+        tx = c.template(self.accounts[0], self.address, use_nonce=True)
+        tx = c.set_code(tx, data)
+        (tx_hash_hex, o) = c.finalize(tx, TxFormat.JSONRPC)
+        r = self.rpc.do(o)
+        o = receipt(tx_hash_hex)
+        r = self.conn.do(o)
+        self.assertEqual(r['status'], 0)
 
 
     def test_transfer(self):
@@ -338,9 +374,6 @@ class Test(EthTesterCase):
         self.rpc.do(o)
 
         expected_id = hash_of_foo[:64-10] + '0000000000'
-        o = c.get_token_raw(self.address, expected_id, sender_address=self.accounts[0])
-        r = self.rpc.do(o)
-
         o = c.get_digest(self.address, expected_id, sender_address=self.accounts[0])
         r = self.rpc.do(o)
         self.assertEqual(strip_0x(r), hash_of_foo)
@@ -387,7 +420,63 @@ class Test(EthTesterCase):
         uri = c.parse_token_uri(r)
 
         self.assertEqual('sha256:' + hash_of_foo, uri)
-    
+
+
+    def test_multi(self):
+        nonce_oracle = RPCNonceOracle(self.accounts[0], self.rpc)
+        c = CraftNFT(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
+
+        (tx_hash_hex, o) = c.allocate(self.address, self.accounts[0], hash_of_foo, amount=2)
+        self.rpc.do(o)
+
+        (tx_hash_hex, o) = c.allocate(self.address, self.accounts[0], hash_of_foo, amount=3)
+        self.rpc.do(o)
+ 
+        (tx_hash_hex, o) = c.allocate(self.address, self.accounts[0], hash_of_bar)
+        self.rpc.do(o)
+        o = receipt(tx_hash_hex)
+        r = self.conn.do(o)
+        self.assertEqual(r['status'], 1)
+
+        (tx_hash_hex, o) = c.mint_to(self.address, self.accounts[0], self.accounts[1], hash_of_bar, 0)
+        self.rpc.do(o)
+        o = receipt(tx_hash_hex)
+        r = self.conn.do(o)
+        self.assertEqual(r['status'], 1)
+
+        (tx_hash_hex, o) = c.mint_to(self.address, self.accounts[0], self.accounts[1], hash_of_foo, 0)
+        self.rpc.do(o)
+        o = receipt(tx_hash_hex)
+        r = self.conn.do(o)
+        self.assertEqual(r['status'], 1)
+
+        (tx_hash_hex, o) = c.mint_to(self.address, self.accounts[0], self.accounts[1], hash_of_bar, 0)
+        self.rpc.do(o)
+        o = receipt(tx_hash_hex)
+        r = self.conn.do(o)
+        self.assertEqual(r['status'], 0)
+
+        (tx_hash_hex, o) = c.mint_to(self.address, self.accounts[0], self.accounts[1], hash_of_foo, 0)
+        self.rpc.do(o)
+        o = receipt(tx_hash_hex)
+        r = self.conn.do(o)
+        self.assertEqual(r['status'], 1)
+
+        (tx_hash_hex, o) = c.mint_to(self.address, self.accounts[0], self.accounts[1], hash_of_foo, 0)
+        self.rpc.do(o)
+        o = receipt(tx_hash_hex)
+        r = self.conn.do(o)
+        self.assertEqual(r['status'], 0)
+
+        expected_id = hash_of_foo[:64-10] + '0000000000'
+        o = c.get_digest(self.address, expected_id, sender_address=self.accounts[0])
+        r = self.rpc.do(o)
+        self.assertEqual(strip_0x(r), hash_of_foo)
+
+        o = c.get_digest(self.address, hash_of_bar, sender_address=self.accounts[0])
+        r = self.rpc.do(o)
+        self.assertEqual(strip_0x(r), hash_of_bar)
+
 
 if __name__ == '__main__':
     unittest.main()

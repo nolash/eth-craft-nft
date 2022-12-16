@@ -90,7 +90,14 @@ contract CraftNFT {
 
 	function mintTo(address _recipient, bytes32 _content) public returns (bytes32) {
 		uint256 right;
+		uint256 first;
+		
+		require(token[_content].length == 1);
+		require(token[_content][0].count == 0);
 		require(mintedToken[_content] == bytes32(0x00));
+		
+		//first &= 0xffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000;
+		//require(mintedToken[bytes32(first)] == bytes32(0x00));
 
 		right = uint160(_recipient);
 		right |= (3 << 254);
