@@ -95,6 +95,25 @@ class CraftNFT(ERC721):
         return o
 
 
+    def get_token_spec_raw(self, contract_address, token_id, batch, sender_address=ZERO_ADDRESS, id_generator=None):
+        j = JSONRPCRequest(id_generator)
+        o = j.template()
+        o['method'] = 'eth_call'
+        enc = ABIContractEncoder()
+        enc.method('token')
+        enc.typ(ABIContractType.BYTES32)
+        enc.typ(ABIContractType.UINT256)
+        enc.bytes32(token_id)
+        enc.uint256(batch)
+        data = add_0x(enc.get())
+        tx = self.template(sender_address, contract_address)
+        tx = self.set_code(tx, data)
+        o['params'].append(self.normalize(tx))
+        o['params'].append('latest')
+        o = j.finalize(o)
+        return o
+
+
     def get_token_raw(self, contract_address, token_id, sender_address=ZERO_ADDRESS, id_generator=None):
         j = JSONRPCRequest(id_generator)
         o = j.template()

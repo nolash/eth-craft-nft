@@ -4,7 +4,6 @@ pragma solidity >= 0.8.0;
 contract CraftNFT {
 
 	struct tokenSpec {
-		uint8 v;
 		uint48 count;
 		uint48 cumulativeCount;
 		uint48 cursor;
@@ -111,7 +110,8 @@ contract CraftNFT {
 		tokenSpec storage spec;
 	
 		spec = token[_content][_batch];
-		if (spec.count == 0 && spec.count == 0) {
+		if (_batch == 0 && spec.count == 0) {
+			spec.cursor += 1;
 			return mintTo(_content, _recipient);
 		}
 		require(spec.cursor < spec.count);
@@ -125,8 +125,8 @@ contract CraftNFT {
 		left |= (_batch << 40);
 		left |= spec.cursor;
 
-		mintedToken[bytes32(left)] = bytes32(right);
 		spec.cursor += 1;
+		mintedToken[bytes32(left)] = bytes32(right);
 	}
 	
 	// ERC-721

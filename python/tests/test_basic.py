@@ -129,6 +129,34 @@ class Test(EthTesterCase):
         self.assertEqual(r['status'], 1)
 
 
+    def test_mint_to_limit(self):
+        nonce_oracle = RPCNonceOracle(self.accounts[0], self.rpc)
+        c = CraftNFT(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
+        (tx_hash_hex, o) = c.allocate(self.address, self.accounts[0], hash_of_foo, amount=10)
+        self.rpc.do(o)
+        o = receipt(tx_hash_hex)
+        r = self.conn.do(o)
+        self.assertEqual(r['status'], 1)
+
+        for i in range(10):
+            o = c.get_token_spec_raw(self.address, hash_of_foo, 0, sender_address=self.accounts[0])
+            r = self.rpc.do(o)
+
+            (tx_hash_hex, o) = c.mint_to(self.address, self.accounts[0], hash_of_foo, 0, self.accounts[(i%8)+i])
+            self.rpc.do(o)
+            o = receipt(tx_hash_hex)
+            r = self.conn.do(o)
+            self.assertEqual(r['status'], 1)
+
+
+        (tx_hash_hex, o) = c.mint_to(self.address, self.accounts[0], hash_of_foo, 0, self.accounts[9])
+        self.rpc.do(o)
+        o = receipt(tx_hash_hex)
+        r = self.conn.do(o)
+        self.assertEqual(r['status'], 0)
+
+
+
     def test_mint_to_single(self):
         nonce_oracle = RPCNonceOracle(self.accounts[0], self.rpc)
         c = CraftNFT(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
@@ -258,16 +286,22 @@ class Test(EthTesterCase):
         (tx_hash_hex, o) = c.allocate(self.address, self.accounts[0], hash_of_foo, amount=4)
         self.rpc.do(o)
 
-        for i in range(4+8+6):
+        for i in range(6+8+4):
             o = c.batch_of(self.address, hash_of_foo, i, sender_address=self.accounts[0])
             r = self.rpc.do(o)
             batch = c.parse_batch_of(r)
 
-            c.mint_to(self.address, self.accounts[0], hash_of_foo, batch, self.accounts[(i%7)+1])
+            (tx_hash_hex, o) = c.mint_to(self.address, self.accounts[0], hash_of_foo, batch, self.accounts[(i%7)+1])
             r = self.rpc.do(o)
             o = receipt(tx_hash_hex)
             r = self.conn.do(o)
             self.assertEqual(r['status'], 1)
+
+        (tx_hash_hex, o) = c.mint_to(self.address, self.accounts[0], hash_of_foo, 2, self.accounts[9])
+        r = self.rpc.do(o)
+        o = receipt(tx_hash_hex)
+        r = self.conn.do(o)
+        self.assertEqual(r['status'], 0)
 
 
 if __name__ == '__main__':
