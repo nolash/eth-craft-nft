@@ -3,7 +3,8 @@
 	"version": "0.0.1",
 	"dependencies": {
 		"web3": "~1.8.1",
-		"@metamask/sdk": "~0.1.0"
+		"@metamask/sdk": "~0.1.0",
+		"jssha": "~3.2.0"
 	},
 	"scripts": {
 		"build": "browserify src/engine.js -s craftnft -p esmify -o dist/craft_nft.js"

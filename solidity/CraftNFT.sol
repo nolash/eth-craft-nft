@@ -21,6 +21,7 @@ contract CraftNFT {
 	// ERC-721 (Metadata - optional)
 	string public symbol;
 
+	uint256 supply;
 
 	// ERC-721
 	event Transfer(address indexed _from, address indexed _to, uint256 indexed _tokenId);
@@ -77,6 +78,7 @@ contract CraftNFT {
 		_token.count = count;
 		_token.cumulativeCount = _cumulativeCount + count;
 		token[content].push(_token);
+		tokens.push(content);
 	}
 
 	function batchOf(bytes32 _content, uint256 _superIndex, uint256 _startAt) public view returns(int256) {
@@ -92,6 +94,7 @@ contract CraftNFT {
 		uint256 right;
 		uint256 first;
 		
+		require(msg.sender == owner);
 		require(token[_content].length == 1);
 		require(token[_content][0].count == 0);
 		require(mintedToken[_content] == bytes32(0x00));
@@ -103,7 +106,7 @@ contract CraftNFT {
 		return _content;
 	}
 	
-	function setOwner(uint256 _tokenId, address _newOwner) private {
+	function setTokenOwner(uint256 _tokenId, address _newOwner) private {
 		uint256 _data;
 		bytes32 _k;
 
@@ -127,6 +130,7 @@ contract CraftNFT {
 			spec.cursor += 1;
 			return mintTo(_recipient, _content);
 		}
+		require(msg.sender == owner);
 		require(spec.cursor < spec.count);
 
 		right = uint256(_content) & ((1 << 40) - 1);
@@ -189,7 +193,7 @@ contract CraftNFT {
 		}
 		
 		tokenAllowance[_tokenId] = address(0);
-		setOwner(_tokenId, _to);
+		setTokenOwner(_tokenId, _to);
 	}
 
 	// ERC-721
@@ -277,5 +281,9 @@ contract CraftNFT {
 			return true;
 		}
 		return false;
+	}
+
+	function totalSupply() public view returns(uint256) {
+		return supply;
 	}
 }

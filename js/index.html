@@ -1,0 +1,56 @@
+<html>
+	<head>
+		<title>Manual test of web3, metamask</title>
+		<script src="node_modules/jssha/dist/sha256.js"></script>
+		<script src="dist/craft_nft.js"></script>
+		<script src="manual_test_browser.js"></script>
+		<script src="src/common.js"></script>
+		<script src="src/wala.js"></script>
+<style type='text/css'>
+#detail {
+	visibility: hidden;
+}
+a {
+	text-decoration: underline;
+	color: #0000ff;
+}
+
+a:hover {
+	cursor: pointer;
+}
+</style>
+	</head>
+	<body>
+			<dl id=data">
+				<dt>account</dt>
+				<dd id="data_account"></dd>
+				<dt>contract</dt>
+				<dd id="data_contract"></dd>
+			</dl>
+		<div id="interactive">
+			<form id="panel" action="#" onSubmit="return false;">
+				<input type="text" id="panel_title" name="title" />
+				<label for="panel_title">Title</label>
+				<input type="text" id="panel_description" name="description" />
+				<label for="panel_description">Description</label>
+				<input type="text" id="panel_amount" name="amount" />
+				<label for="panel_amount">Batch size (0 or empty for unique work)</label>
+				<button id="panel_submit">create</button>
+			</form>
+		</div>
+		<div id="detail">
+			<a id="back_link" onClick="listTokens();">back</a>
+			<dl>
+				<dt>token id</dt>
+				<dd id="token_id"></dd>
+				<dt>name</dt>
+				<dd id="token_name"></dd>
+				<dt>description</dt>
+				<dd id="token_description"></dd>
+			</dl>
+		</div>
+		<h2>Tokens</h2>
+
+		<ul id="token_list"></ul>
+	</body>
+</html>
