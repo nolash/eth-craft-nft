@@ -9,7 +9,7 @@ window.addEventListener('token', (e) => {
 });
 
 
-window.addEventListener('tokenBatch', (e) => {
+window.addEventListener('tokenBatch', async (e) => {
 	let currentTokenId = document.getElementById('token_id').innerHTML;
 	if (currentTokenId.substring(0, 2) == '0x') {
 		currentTokenId = currentTokenId.substring(2);
@@ -20,9 +20,10 @@ window.addEventListener('tokenBatch', (e) => {
 	const li = document.createElement('li');
 	const span = document.createElement('span');
 	li.setAttribute('id', 'token_' + e.detail.tokenId + ' _batch_' + e.detail.batch);
-	span.innerHTML = 'used ' + e.detail.cursor + ' of ' + e.detail.count;
+	span.innerHTML = 'used ' + e.detail.cursor + ' of ' + e.detail.count + ' ';
 	li.appendChild(span);
-	if (window.craftnft.isMintAvailable(session, e.detail.tokenId, e.detail.batch)) {
+	const isMintable = await window.craftnft.isMintAvailable(session, e.detail.tokenId, e.detail.batch);
+	if (isMintable) {
 		const a = document.createElement('a');
 		a.setAttribute('onClick', 'uiMintToken("' + e.detail.tokenId + '", ' + e.detail.batch + ')');
 		a.innerHTML = 'mint';
