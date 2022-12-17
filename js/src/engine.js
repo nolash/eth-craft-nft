@@ -63,6 +63,9 @@ async function mintToken(session, tokenId, batch, recipient) {
 
 async function isMintAvailable(session, tokenId, batch) {
 	let token = await session.contract.methods.token('0x' + tokenId, batch).call({from: session.account});
+	if (token === undefined) {
+		return false;
+	}
 	if (batch == 0) {
 		if (token.count == 0) {
 			return token.cursor == 0;
