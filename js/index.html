@@ -10,6 +10,9 @@
 #detail {
 	visibility: hidden;
 }
+#mint {
+	visibility: hidden;
+}
 a {
 	text-decoration: underline;
 	color: #0000ff;
@@ -39,7 +42,7 @@ a:hover {
 			</form>
 		</div>
 		<div id="detail">
-			<a id="back_link" onClick="listTokens();">back</a>
+			<a id="back_link" onClick="uiCreateToken();">back</a>
 			<dl>
 				<dt>token id</dt>
 				<dd id="token_id"></dd>
@@ -47,7 +50,24 @@ a:hover {
 				<dd id="token_name"></dd>
 				<dt>description</dt>
 				<dd id="token_description"></dd>
+				<dt class="token_batch_list">batches</dt>
+				<dd class="token_batch_list">
+					<ol id="token_batches"></ol>
+				</dd>
 			</dl>
+		</div>
+		<div id="mint">
+			<a id="back_link" onClick="uiCreateToken();">back</a>
+			<dl>
+				<dt>token id</dt>
+				<dd id="token_mint_id"></dd>
+				<dt>batch</dt>
+				<dd id="token_mint_batch"></dd>
+			</dl>
+			<form>
+				<input type="text" id="token_mint_recipient" />
+				<button id="mint_submit">mint</button>
+			</form>
 		</div>
 		<h2>Tokens</h2>
 

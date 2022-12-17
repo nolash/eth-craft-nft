@@ -51,10 +51,56 @@ async function allocateToken(session, tokenId, amount) {
 	});
 }
 
+async function mintToken(session, tokenId, batch, recipient) {
+	const w3 = new Web3();
+	const address = await w3.utils.toChecksumAddress(recipient);
+	console.log('address', address, recipient);
+	session.contract.methods.mintFromBatchTo(address, '0x' + tokenId, batch).send({
+		from: session.account,
+		value: 0,
+	});
+}
+
+async function isMintAvailable(session, tokenId, batch) {
+	let token = await session.contract.methods.token('0x' + tokenId, batch).call({from: session.account});
+	if (batch == 0) {
+		if (token.count == 0) {
+			return token.cursor == 0;
+		}
+	}
+	if (token.cursor < token.count) {
+		return true;
+	}
+	return false;
+}
+
+async function getBatches(session, tokenId, callback) {
+	let token = await session.contract.methods.token('0x' + tokenId, 0).call({from: session.account});
+	if (token.count == 0) {
+		callback(-1);
+		return;
+	}
+
+	callback(0, token.count, token.cursor);
+	let i = 1;
+	while (true) {
+		try {
+			token = await session.contract.methods.token('0x' + tokenId, 1).call({from: session.account});
+		} catch(e) {
+			break;
+		}
+		callback(i, token.count, token.cursor);
+		i++;
+	}
+}
+
 module.exports = {
 	loadProvider: loadProvider,
 	loadConn: loadConn,
 	startSession: startSession,
 	getTokens: getTokens,
+	getBatches: getBatches,
 	allocateToken: allocateToken,
+	mintToken: mintToken,
+	isMintAvailable: isMintAvailable,
 };

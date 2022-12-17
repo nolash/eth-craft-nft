@@ -1,11 +1,34 @@
 window.addEventListener('token', (e) => {
 	const li = document.createElement('li');
 	const a = document.createElement('a');
-	a.setAttribute('onClick', 'viewToken("' + e.detail.tokenId + '")');
+	a.setAttribute('onClick', 'uiViewToken("' + e.detail.tokenId + '")');
 	li.id = 'token_' + e.detail.tokenId;
 	a.textContent = e.detail.tokenId;
 	li.appendChild(a);
 	document.getElementById('token_list').appendChild(li);
+});
+
+window.addEventListener('tokenBatch', (e) => {
+	let currentTokenId = document.getElementById('token_id').innerHTML;
+	if (currentTokenId.substring(0, 2) == '0x') {
+		currentTokenId = currentTokenId.substring(2);
+	}
+	if (e.detail.tokenId != currentTokenId) {
+		throw 'batch event without matching token ' + tokenId + ' in view';
+	}
+	const li = document.createElement('li');
+	const span = document.createElement('span');
+	li.setAttribute('id', 'token_' + e.detail.tokenId + ' _batch_' + e.detail.batch);
+	span.innerHTML = 'used ' + e.detail.cursor + ' of ' + e.detail.count;
+	li.appendChild(span);
+	if (window.craftnft.isMintAvailable(e.detail.tokenId, e.detail.batch)) {
+		const a = document.createElement('a');
+		a.setAttribute('onClick', 'uiMintToken("' + e.detail.tokenId + '", ' + e.detail.batch + ')');
+		a.innerHTML = 'mint';
+		li.appendChild(a);
+	}
+	const batchList = document.getElementById('token_batches')
+	batchList.appendChild(li);
 });
 
 
@@ -47,20 +70,81 @@ async function generatePayload() {
 	window.dispatchEvent(tokenRequestEvent);
 }
 
-async function viewToken(tokenId) {
+async function generateMint() {
+	const tokenId = document.getElementById('token_mint_id').innerHTML;
+	let batch = document.getElementById('token_mint_batch').innerHTML;
+	batch = parseInt(batch, 10);
+	const recipient = document.getElementById('token_mint_recipient').value;
+	window.craftnft.mintToken(session, tokenId, batch, recipient);
+	uiViewToken(tokenId);
+}
+
+async function uiMintToken(tokenId, batch) {
+	document.getElementById('token_mint_id').innerHTML = tokenId;
+	document.getElementById('token_mint_batch').innerHTML = batch;
+
+	document.getElementById('interactive').style.visibility = 'hidden';
+	document.getElementById('detail').style.visibility = 'hidden';
+	document.getElementById('mint').style.visibility = 'visible'
+}
+
+async function uiViewTokenSingle(tokenId) {
+	if (!await window.craftnft.isMintAvailable(session, tokenId, 0)) {
+		console.debug('token ' + tokenId + ' is already minted');
+		return;
+	}
+	const li = document.createElement('li');
+	li.setAttribute('id', 'token_' + tokenId + '_single');
+	
+	let a = document.createElement('a');
+	a.setAttribute('onClick', 'uiMintToken("' + tokenId + '", ' + 0 + ')');
+	a.innerHTML = 'mint';
+	li.appendChild(a);
+
+	const batch = document.getElementById('token_batches');
+	batch.appendChild(li);
+
+}
+
+async function uiViewToken(tokenId) {
 	const r = await session.contentGateway.get(tokenId);
 	const tokenData = JSON.parse(r);
+
+	const batch_shit = document.getElementById('token_batches');
+	while (batch_shit.lastChild) {
+		batch_shit.removeChild(batch_shit.lastChild);
+	}
 
 	document.getElementById('token_id').innerHTML = tokenId;
 	document.getElementById('token_name').innerHTML = tokenData.name;
 	document.getElementById('token_description').innerHTML = tokenData.description;
+	window.craftnft.getBatches(session, tokenId, (batch, count, cursor) => {
+		if (batch == -1) {
+			uiViewTokenSingle(tokenId);
+			return;
+		}
+		const e = new CustomEvent('tokenBatch', {
+			detail: {
+				tokenId: tokenId,
+				batch: batch,
+				count: count,
+				cursor: cursor,
+			},
+			bubbles: true,
+			cancelable: true,
+			composed: false,
+		});
+		window.dispatchEvent(e);
+	});
 	document.getElementById('interactive').style.visibility = 'hidden';
 	document.getElementById('detail').style.visibility = 'visible';
+	document.getElementById('mint').style.visibility = 'hidden';
 }
 
-async function listTokens() {
+async function uiCreateToken() {
 	document.getElementById('interactive').style.visibility = 'visible';
 	document.getElementById('detail').style.visibility = 'hidden';
+	document.getElementById('mint').style.visibility = 'hidden';
 }
 
 function run(w3, generated_session) {
@@ -69,11 +153,12 @@ function run(w3, generated_session) {
 	document.getElementById('data_account').innerHTML = session.account;
 	document.getElementById('data_contract').innerHTML = session.contractAddress;
 	document.getElementById('panel_submit').addEventListener('click', generatePayload);
+	document.getElementById('mint_submit').addEventListener('click', generateMint);
 	window.craftnft.getTokens(w3, session, (tokenId) => {
 		if (tokenId.substring(0, 2) == '0x') {
 			tokenId = tokenId.substring(2);
 		}
-		const tokenEvent = new CustomEvent('token', {
+		const e = new CustomEvent('token', {
 			detail: {
 				tokenId: tokenId,
 			},
@@ -81,6 +166,6 @@ function run(w3, generated_session) {
 			cancelable: true,
 			composed: false,
 		});
-		window.dispatchEvent(tokenEvent);
+		window.dispatchEvent(e);
 	});
 }
