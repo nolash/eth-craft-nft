@@ -25,8 +25,14 @@ async function startSession(w3, config, session, runner) {
 	session.contract = loadContract(w3, config);
 	session.name = await session.contract.methods.name().call({from: session.account});
 	session.symbol = await session.contract.methods.symbol().call({from: session.account});
+	session.supply = await session.contract.methods.totalSupply().call({from: session.account});
 	console.debug('session', session);
 	runner(w3, session);
+}
+
+async function refreshSession(session) {
+	session.supply = await session.contract.methods.totalSupply().call({from: session.account});
+	return session;
 }
 
 async function getTokens(w3, session, callback) {

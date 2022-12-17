@@ -4,6 +4,7 @@ var session = {
 	contract: undefined,
 	name: undefined,
 	symbol: undefined,
+	supply: 0,
 };
 
 

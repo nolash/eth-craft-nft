@@ -79,6 +79,12 @@ contract CraftNFT {
 		_token.cumulativeCount = _cumulativeCount + count;
 		token[content].push(_token);
 		tokens.push(content);
+
+		if (count == 0) {
+			supply += 1;	
+		} else {
+			supply += count;
+		}
 	}
 
 	function batchOf(bytes32 _content, uint256 _superIndex, uint256 _startAt) public view returns(int256) {

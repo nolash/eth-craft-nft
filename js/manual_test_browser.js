@@ -177,6 +177,7 @@ async function run(w3, generated_session) {
 	document.getElementById('data_contract').innerHTML = session.contractAddress;
 	document.getElementById('data_name').innerHTML = session.name;
 	document.getElementById('data_symbol').innerHTML = session.symbol;
+	document.getElementById('data_supply').innerHTML = session.supply;
 	document.getElementById('panel_submit').addEventListener('click', generatePayload);
 	document.getElementById('mint_submit').addEventListener('click', generateMint);
 	window.craftnft.getTokens(w3, session, (tokenId) => {
