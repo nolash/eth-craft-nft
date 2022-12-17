@@ -94,6 +94,16 @@ async function getBatches(session, tokenId, callback) {
 	}
 }
 
+async function isOwner(session, address) {
+	let owner = await session.contract.methods.owner().call({from: session.account});
+
+	const w3 = new Web3();
+	address = await w3.utils.toChecksumAddress(address);
+	owner = await w3.utils.toChecksumAddress(owner);
+
+	return address == owner;
+}
+
 module.exports = {
 	loadProvider: loadProvider,
 	loadConn: loadConn,
@@ -103,4 +113,5 @@ module.exports = {
 	allocateToken: allocateToken,
 	mintToken: mintToken,
 	isMintAvailable: isMintAvailable,
+	isOwner: isOwner,
 };

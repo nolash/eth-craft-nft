@@ -8,6 +8,7 @@ window.addEventListener('token', (e) => {
 	document.getElementById('token_list').appendChild(li);
 });
 
+
 window.addEventListener('tokenBatch', (e) => {
 	let currentTokenId = document.getElementById('token_id').innerHTML;
 	if (currentTokenId.substring(0, 2) == '0x') {
@@ -70,6 +71,7 @@ async function generatePayload() {
 	window.dispatchEvent(tokenRequestEvent);
 }
 
+
 async function generateMint() {
 	const tokenId = document.getElementById('token_mint_id').innerHTML;
 	let batch = document.getElementById('token_mint_batch').innerHTML;
@@ -79,6 +81,7 @@ async function generateMint() {
 	uiViewToken(tokenId);
 }
 
+
 async function uiMintToken(tokenId, batch) {
 	document.getElementById('token_mint_id').innerHTML = tokenId;
 	document.getElementById('token_mint_batch').innerHTML = batch;
@@ -87,6 +90,7 @@ async function uiMintToken(tokenId, batch) {
 	document.getElementById('detail').style.visibility = 'hidden';
 	document.getElementById('mint').style.visibility = 'visible'
 }
+
 
 async function uiViewTokenSingle(tokenId) {
 	if (!await window.craftnft.isMintAvailable(session, tokenId, 0)) {
@@ -105,6 +109,7 @@ async function uiViewTokenSingle(tokenId) {
 	batch.appendChild(li);
 
 }
+
 
 async function uiViewToken(tokenId) {
 	const r = await session.contentGateway.get(tokenId);
@@ -141,17 +146,36 @@ async function uiViewToken(tokenId) {
 	document.getElementById('mint').style.visibility = 'hidden';
 }
 
+
 async function uiCreateToken() {
 	document.getElementById('interactive').style.visibility = 'visible';
 	document.getElementById('detail').style.visibility = 'hidden';
 	document.getElementById('mint').style.visibility = 'hidden';
 }
 
-function run(w3, generated_session) {
+
+async function run(w3, generated_session) {
 	session = generated_session;
 	session.contentGateway = new Wala('http://localhost:8001');
-	document.getElementById('data_account').innerHTML = session.account;
+	const account = document.getElementById('data_account');
+	let s = document.createElement('span');
+	s.innerHTML = session.account; 
+	account.append(s);
+
+	let f = document.createElement('font');
+	if (await window.craftnft.isOwner(session, session.account)) {
+		f.setAttribute('color', 'green');
+		f.innerHTML += ' (contract owner)';
+		account.append(s);
+	} else {
+		f.setAttribute('color', 'red');
+		f.innerHTML = ' (not contract owner!)';
+	}
+	account.append(f);
+
 	document.getElementById('data_contract').innerHTML = session.contractAddress;
+	document.getElementById('data_name').innerHTML = session.name;
+	document.getElementById('data_symbol').innerHTML = session.symbol;
 	document.getElementById('panel_submit').addEventListener('click', generatePayload);
 	document.getElementById('mint_submit').addEventListener('click', generateMint);
 	window.craftnft.getTokens(w3, session, (tokenId) => {
