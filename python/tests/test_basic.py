@@ -42,6 +42,7 @@ testdir = os.path.dirname(__file__)
 hash_of_foo = '2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae'
 hash_of_bar = 'fcde2b2edba56bf408601fb721fe9b5c338d10ee429ea04fae5511b68fbf8fb9'
 
+
 class Test(EthTesterCase):
 
     def setUp(self):

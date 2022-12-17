@@ -96,9 +96,6 @@ contract CraftNFT {
 		require(token[_content][0].count == 0);
 		require(mintedToken[_content] == bytes32(0x00));
 		
-		//first &= 0xffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000;
-		//require(mintedToken[bytes32(first)] == bytes32(0x00));
-
 		right = uint160(_recipient);
 		right |= (3 << 254);
 		mintedToken[_content] = bytes32(right);
