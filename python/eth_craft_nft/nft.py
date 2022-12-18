@@ -133,26 +133,24 @@ class CraftNFT(ERC721):
         o = j.finalize(o)
         return o
 
+    
+    def batch_of(self, conn, contract_address, token_id, super_index, sender_address=ZERO_ADDRESS, id_generator=None):
+        i = 0
+        c = 0
 
-    def batch_of(self, contract_address, token_id, super_index, start_at=0, max_batches=0, sender_address=ZERO_ADDRESS, id_generator=None):
-        j = JSONRPCRequest(id_generator)
-        o = j.template()
-        o['method'] = 'eth_call'
-        enc = ABIContractEncoder()
-        enc.method('batchOf')
-        enc.typ(ABIContractType.BYTES32)
-        enc.typ(ABIContractType.UINT256)
-        enc.typ(ABIContractType.UINT256)
-        enc.bytes32(token_id)
-        enc.uint256(super_index)
-        enc.uint256(start_at)
-        data = add_0x(enc.get())
-        tx = self.template(sender_address, contract_address)
-        tx = self.set_code(tx, data)
-        o['params'].append(self.normalize(tx))
-        o['params'].append('latest')
-        o = j.finalize(o)
-        return o
+        while True:
+            o = self.get_token_spec(contract_address, token_id, i, sender_address=sender_address)
+            try:
+                r = conn.do(o)
+            except:
+                break
+            spec = self.parse_token_spec(r)
+            c += spec.count
+            if super_index < c:
+                return i
+            i += 1
+
+        raise ValueError(super_index)
 
 
     def get_token_spec(self, contract_address, token_id, batch, sender_address=ZERO_ADDRESS, id_generator=None):

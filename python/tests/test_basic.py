@@ -90,25 +90,17 @@ class Test(EthTesterCase):
         r = self.conn.do(o)
         self.assertEqual(r['status'], 1)
 
-        o = c.batch_of(self.address, hash_of_foo, 9, sender_address=self.accounts[0])
-        r = self.rpc.do(o)
-        batch = c.parse_batch_of(r)
-        self.assertEqual(batch, 0)
+        r = c.batch_of(self.rpc, self.address, hash_of_foo, 9, sender_address=self.accounts[0])
+        self.assertEqual(r, 0)
 
-        o = c.batch_of(self.address, hash_of_foo, 10, sender_address=self.accounts[0])
-        r = self.rpc.do(o)
-        batch = c.parse_batch_of(r)
-        self.assertEqual(batch, 1)
+        r = c.batch_of(self.rpc, self.address, hash_of_foo, 10, sender_address=self.accounts[0])
+        self.assertEqual(r, 1)
 
-        o = c.batch_of(self.address, hash_of_foo, 29, sender_address=self.accounts[0])
-        r = self.rpc.do(o)
-        batch = c.parse_batch_of(r)
-        self.assertEqual(batch, 1)
+        r = c.batch_of(self.rpc, self.address, hash_of_foo, 29, sender_address=self.accounts[0])
+        self.assertEqual(r, 1)
 
-        o = c.batch_of(self.address, hash_of_foo, 30, sender_address=self.accounts[0])
-        r = self.rpc.do(o)
-        with self.assertRaises(InvalidBatchError):
-            batch = c.parse_batch_of(r)
+        with self.assertRaises(ValueError):
+            c.batch_of(self.rpc, self.address, hash_of_foo, 30, sender_address=self.accounts[0])
 
 
     def test_mint_to(self):
@@ -321,9 +313,7 @@ class Test(EthTesterCase):
         self.rpc.do(o)
 
         for i in range(6+8+4):
-            o = c.batch_of(self.address, hash_of_foo, i, sender_address=self.accounts[0])
-            r = self.rpc.do(o)
-            batch = c.parse_batch_of(r)
+            batch = c.batch_of(self.rpc, self.address, hash_of_foo, i, sender_address=self.accounts[0])
 
             (tx_hash_hex, o) = c.mint_to(self.address, self.accounts[0], self.accounts[(i%7)+1], hash_of_foo, batch)
             r = self.rpc.do(o)

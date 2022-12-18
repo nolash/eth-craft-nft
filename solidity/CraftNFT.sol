@@ -114,14 +114,14 @@ contract CraftNFT {
 
 	// Find the token batch which contains the given index.
 	// Search scope can be controlled using the _startAt and _endAt properties.
-	function batchOf(bytes32 _content, uint256 _superIndex, uint256 _startAt) public view returns(int256) {
-		for (uint256 i = _startAt; i < token[_content].length; i++) {
-			if (token[_content][i].cumulativeCount > uint128(_superIndex)) {
-				return int256(i);
-			}
-		}
-		return -1;
-	}
+//	function batchOf(bytes32 _content, uint256 _superIndex, uint256 _startAt) public view returns(int256) {
+//		for (uint256 i = _startAt; i < token[_content].length; i++) {
+//			if (token[_content][i].cumulativeCount > uint128(_superIndex)) {
+//				return int256(i);
+//			}
+//		}
+//		return -1;
+//	}
 
 	// Mint a unique token. The method will fail if the token was allocated as a batch.
 	function mintTo(address _recipient, bytes32 _content) public returns (bytes32) {
