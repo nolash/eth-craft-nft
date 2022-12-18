@@ -3,6 +3,15 @@ pragma solidity >= 0.8.0;
 
 contract CraftNFT {
 
+	// Defines the behavior of a single token batch.
+	// 
+	// count defines the amount of tokens there are in a batch. A count of 0 indicates a unique token.
+	// A batched token can never have a token count of 0 in any batch.
+	// 
+	// cursor keeps track of how many tokens have been minted in the batch.
+	//
+	// If sparse is set, token indexes in mintedToken may not be in order.
+        // In this case a full iteration up to count is required to discover all minted tokens.
 	struct tokenSpec {
 		uint48 count;
 		uint48 cumulativeCount;
@@ -10,11 +19,21 @@ contract CraftNFT {
 		bool sparse;
 	}
 	address public owner;
+
+	// Collection of all unique token keys
 	bytes32[] public tokens;
+
+	// Define each batch of a token. (A unqiue token will have a single entry only).
 	mapping(bytes32 => tokenSpec[]) public token;
+
+	// Individual tokens from batches. A unique token is also represented by the same content.
 	mapping(bytes32 => bytes32) public mintedToken;
-	mapping(uint256 => address) tokenAllowance; // backend for approve
-	mapping(address => address) tokenOperator; // backend for setApprovalForAll
+
+	// Registry for the approve() method
+	mapping(uint256 => address) tokenAllowance;
+
+	// Registry for the setApprovalForAll() method
+	mapping(address => address) tokenOperator;
 
 	// ERC-721 (Metadata - optional)
 	string public name;
@@ -39,14 +58,17 @@ contract CraftNFT {
 		symbol = _symbol;
 	}
 
+	// Check bit that is always set on the content data when a token has been minted
 	function isActive(bytes32 _tokenContent) private view returns(bool) {
 		return uint256(_tokenContent) & 0x8000000000000000000000000000000000000000000000000000000000000000 > 0;
 	}
 
+	// Returns true if the content data belongs to a unique token
 	function isSingle(bytes32 _tokenContent) private view returns(bool) {
 		return uint256(_tokenContent) & 0x4000000000000000000000000000000000000000000000000000000000000000 > 0;
 	}
 
+	// Reassemble unique token key from indexed token id
 	function getDigest(bytes32 _truncatedId) public view returns (bytes32) {
 		bytes32 digest;
 
@@ -63,7 +85,8 @@ contract CraftNFT {
 		return digest;
 	}
 
-	// allocate a batch of tokens
+	// Allocate tokens for minting.
+	// if count is set to 0, only a single unique token can be minted.
 	function allocate(bytes32 content, uint48 count) public returns (bool) {
 		uint256 l;
 		uint48 _cumulativeCount;
@@ -89,6 +112,8 @@ contract CraftNFT {
 		}
 	}
 
+	// Find the token batch which contains the given index.
+	// Search scope can be controlled using the _startAt and _endAt properties.
 	function batchOf(bytes32 _content, uint256 _superIndex, uint256 _startAt) public view returns(int256) {
 		for (uint256 i = _startAt; i < token[_content].length; i++) {
 			if (token[_content][i].cumulativeCount > uint128(_superIndex)) {
@@ -98,6 +123,7 @@ contract CraftNFT {
 		return -1;
 	}
 
+	// Mint a unique token. The method will fail if the token was allocated as a batch.
 	function mintTo(address _recipient, bytes32 _content) public returns (bytes32) {
 		uint256 right;
 		uint256 first;
@@ -113,7 +139,8 @@ contract CraftNFT {
 
 		return _content;
 	}
-	
+
+	// Apply the token owner to the token content data.
 	function setTokenOwner(uint256 _tokenId, address _newOwner) private {
 		uint256 _data;
 		bytes32 _k;
@@ -128,6 +155,13 @@ contract CraftNFT {
 		mintedToken[_k] = bytes32(_data);
 	}
 
+	// Mint a token from a batch.
+	// Will fail if:
+	// * All tokens in the batch have already been minted
+	// * One or more tokens have been minted out of sequential order (see mintExactFromBatchTo)
+	//
+	// If the token was allocated as a single token (which has not yet been minted),
+	// this method will transparently alias to mintTo
 	function mintFromBatchTo(address _recipient, bytes32 _content, uint256 _batch) public returns (bytes32) {
 		tokenSpec storage spec;
 	
@@ -144,6 +178,11 @@ contract CraftNFT {
 	}
 
 
+	// Mint a token at a specific index of a batch
+	// If the index is not the next sequential index in the batch, the token will be marked as sparse.
+	// Sparse tokens cannot thereafter be minted using mintFromBatchTo
+	// The method will fail if the token at the specified index has already been minted, or if the index is out of bounds of the batch.
+	// This method cannot be used to mint a unique token.
 	function mintExactFromBatchTo(address _recipient, bytes32 _content, uint256 _batch, uint48 _index) public returns (bytes32) {
 		tokenSpec storage spec;
 
@@ -154,7 +193,7 @@ contract CraftNFT {
 		return mintBatchCore(_recipient, _content, _batch, _index, spec);
 	}
 
-
+	// Common code path for both batch mint methods.
 	function mintBatchCore(address _recipient, bytes32 _content, uint256 _batch, uint48 _index, tokenSpec storage _spec) private returns (bytes32) {
 		uint256 left;
 		uint256 right;
@@ -219,7 +258,7 @@ contract CraftNFT {
 		return address(bytes20(_tokenContent << 96));
 	}
 
-	// shared function for transfer methods
+	// Common code path for transfer methods
 	function transferCore(address _from, address _to, uint256 _tokenId, bytes memory _data) internal {
 		address currentTokenOwner;
 
@@ -321,6 +360,7 @@ contract CraftNFT {
 		return false;
 	}
 
+	// ERC-721
 	function totalSupply() public view returns(uint256) {
 		return supply;
 	}
