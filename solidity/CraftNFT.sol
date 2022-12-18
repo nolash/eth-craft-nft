@@ -14,7 +14,6 @@ contract CraftNFT {
         // In this case a full iteration up to count is required to discover all minted tokens.
 	struct tokenSpec {
 		uint48 count;
-		uint48 cumulativeCount;
 		uint48 cursor;
 		bool sparse;
 	}
@@ -52,6 +51,9 @@ contract CraftNFT {
 	// ERC-721
 	event TransferWithData(address indexed _from, address indexed _to, uint256 indexed _tokenId, bytes32 _data);
 
+	// Minter
+	event Mint(address indexed _minter, address indexed _beneficiary, uint256 value);
+
 	constructor(string memory _name, string memory _symbol) {
 		owner = msg.sender;
 		name = _name;
@@ -79,9 +81,9 @@ contract CraftNFT {
 			return _truncatedId;
 		}
 
-		digest &= 0x00ffffffffff0000000000000000000000000000000000000000000000000000;
-		digest >>= 208;
-		digest |= _truncatedId & 0xffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000;
+		digest &= 0x00ffffffffffffffff0000000000000000000000000000000000000000000000;
+		digest >>= 184;
+		digest |= _truncatedId & 0xffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000;
 		return digest;
 	}
 
@@ -89,7 +91,6 @@ contract CraftNFT {
 	// if count is set to 0, only a single unique token can be minted.
 	function allocate(bytes32 content, uint48 count) public returns (bool) {
 		uint256 l;
-		uint48 _cumulativeCount;
 		require(msg.sender == owner);
 		
 		tokenSpec memory _token;
@@ -97,11 +98,9 @@ contract CraftNFT {
 		l = token[content].length;
 		if (l > 0) {
 			require(token[content][0].count > 0);
-			_cumulativeCount = token[content][l-1].cumulativeCount;
 		}
 
 		_token.count = count;
-		_token.cumulativeCount = _cumulativeCount + count;
 		token[content].push(_token);
 		tokens.push(content);
 
@@ -162,10 +161,10 @@ contract CraftNFT {
 	//
 	// If the token was allocated as a single token (which has not yet been minted),
 	// this method will transparently alias to mintTo
-	function mintFromBatchTo(address _recipient, bytes32 _content, uint256 _batch) public returns (bytes32) {
+	function mintFromBatchTo(address _recipient, bytes32 _content, uint16 _batch) public returns (bytes32) {
 		tokenSpec storage spec;
 	
-		spec = token[_content][_batch];
+		spec = token[_content][uint256(_batch)];
 
 		require(!spec.sparse);
 		if (_batch == 0 && spec.count == 0) {
@@ -183,7 +182,7 @@ contract CraftNFT {
 	// Sparse tokens cannot thereafter be minted using mintFromBatchTo
 	// The method will fail if the token at the specified index has already been minted, or if the index is out of bounds of the batch.
 	// This method cannot be used to mint a unique token.
-	function mintExactFromBatchTo(address _recipient, bytes32 _content, uint256 _batch, uint48 _index) public returns (bytes32) {
+	function mintExactFromBatchTo(address _recipient, bytes32 _content, uint16 _batch, uint48 _index) public returns (bytes32) {
 		tokenSpec storage spec;
 
 		spec = token[_content][_batch];
@@ -194,13 +193,13 @@ contract CraftNFT {
 	}
 
 	// Common code path for both batch mint methods.
-	function mintBatchCore(address _recipient, bytes32 _content, uint256 _batch, uint48 _index, tokenSpec storage _spec) private returns (bytes32) {
+	function mintBatchCore(address _recipient, bytes32 _content, uint16 _batch, uint48 _index, tokenSpec storage _spec) private returns (bytes32) {
 		uint256 left;
 		uint256 right;
 		bytes32 k;
 	
-		left = uint256(_content) & 0xffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000;
-		left |= (_batch << 20);
+		left = uint256(_content) & 0xffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000;
+		left |= ((_batch & 0xffffffffffffffff) << 48);
 		left |= _index;	
 		k = bytes32(left);
 	
@@ -212,13 +211,14 @@ contract CraftNFT {
 			}
 		}
 
-		right = uint256(_content) & ((1 << 40) - 1);
-		right <<= 208;
+		right = uint256(_content) & ((1 << 64) - 1);
+		right <<= 184;
 		right |= (1 << 255);
 		right |= uint160(_recipient);
 
 		_spec.cursor += 1;
 		mintedToken[k] = bytes32(right);
+		emit Mint(msg.sender, _recipient, left);
 
 		return k;
 	}

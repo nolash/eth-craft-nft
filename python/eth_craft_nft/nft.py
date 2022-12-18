@@ -28,9 +28,8 @@ logg = logging.getLogger(__name__)
 
 class TokenSpec:
 
-    def __init__(self, count, cumulative_count, cursor):
+    def __init__(self, count, cursor):
         self.count = count
-        self.cumulative_count = cumulative_count
         self.cursor = cursor
 
 
@@ -213,27 +212,30 @@ class CraftNFT(ERC721):
             enc.method('mintExactFromBatchTo')
             enc.typ(ABIContractType.ADDRESS)
             enc.typ(ABIContractType.BYTES32)
-            enc.typ(ABIContractType.UINT256)
+            enc.typ(ABIContractType.UINT16)
             enc.typ(ABIContractType.UINT48)
             enc.address(recipient)
             enc.bytes32(token_id)
-            enc.uint256(batch)
+            enc.uintn(batch, 16)
             enc.uintn(index, 48)
             data = enc.get()
         else:
             enc.method('mintFromBatchTo')
             enc.typ(ABIContractType.ADDRESS)
             enc.typ(ABIContractType.BYTES32)
-            enc.typ(ABIContractType.UINT256)
+            enc.typ(ABIContractType.UINT16)
             enc.address(recipient)
             enc.bytes32(token_id)
-            enc.uint256(batch)
+            enc.uintn(batch, 16)
             data = enc.get()
 
         tx = self.template(sender_address, contract_address, use_nonce=True)
         tx = self.set_code(tx, data)
         tx = self.finalize(tx, tx_format)
         return tx
+
+
+   # def to_index_id(self, token_id, batch, index):
 
 
     @classmethod
@@ -250,12 +252,10 @@ class CraftNFT(ERC721):
         d = ABIContractDecoder()
         d.typ(ABIContractType.UINT48)
         d.typ(ABIContractType.UINT48)
-        d.typ(ABIContractType.UINT48)
         d.val(v[:64])
         d.val(v[64:128])
-        d.val(v[128:192])
         r = d.decode()
-        return TokenSpec(r[0], r[1], r[2])
+        return TokenSpec(r[0], r[1])
 
     @classmethod
     def parse_token(self, v, token_id):
