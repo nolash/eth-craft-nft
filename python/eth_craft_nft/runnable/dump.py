@@ -100,7 +100,6 @@ def render_token_mint(c, conn, token_address, token_id, w=sys.stdout):
     o = c.get_token(token_address, token_id)
     r = conn.do(o)
     token = c.parse_token(r, token_id)
-    logg.info('specccc {} {}'.format(token_id, token))
     if token.minted:
         w.write('token {}\n'.format(token))
 

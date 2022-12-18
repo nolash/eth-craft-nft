@@ -91,9 +91,9 @@ async function getMintedToken(session, tokenId, batch) {
 		}
 	}
 	o.sparse = token.sparse;
-	o.cap = token.count;
-	o.count = token.cursor;
-	if (token.cursor < token.count) {
+	o.cap = parseInt(token.count);
+	o.count = parseInt(token.cursor);
+	if (o.count < o.cap) {
 		o.mintable = true;
 	}
 	return o;
