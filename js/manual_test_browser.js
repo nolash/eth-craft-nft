@@ -17,16 +17,18 @@ window.addEventListener('tokenBatch', async (e) => {
 	if (e.detail.tokenId != currentTokenId) {
 		throw 'batch event without matching token ' + tokenId + ' in view';
 	}
-	const mintedToken = await window.craftnft.getMintedToken(session, e.detail.tokenId);
-	console.debug('retrieved minted token data', mintedToken);
 
 	const li = document.createElement('li');
 	const span = document.createElement('span');
 	li.setAttribute('id', 'token_' + e.detail.tokenId + ' _batch_' + e.detail.batch);
 	span.innerHTML = 'used ' + e.detail.cursor + ' of ' + e.detail.count + ' ';
 	li.appendChild(span);
-	const isMintable = await window.craftnft.isMintAvailable(session, e.detail.tokenId, e.detail.batch);
-	if (isMintable) {
+
+	const mintedTokenData = await window.craftnft.getMintedToken(session, e.detail.tokenId, e.detail.batch);
+	console.debug('retrieved minted token data', mintedTokenData);
+
+	//const isMintable = await window.craftnft.isMintAvailable(session, e.detail.tokenId, e.detail.batch);
+	if (mintedTokenData.mintable) {
 		const a = document.createElement('a');
 		a.setAttribute('onClick', 'uiMintToken("' + e.detail.tokenId + '", ' + e.detail.batch + ')');
 		a.innerHTML = 'mint';
@@ -98,12 +100,12 @@ async function uiMintToken(tokenId, batch) {
 
 async function uiViewTokenSingle(tokenId) {
 	let li = document.createElement('li');
-
-	const mintedToken = await window.craftnft.getMintedToken(session, tokenId);
-	console.debug('retrieved minted single token data', mintedToken);
-
 	li.setAttribute('id', 'token_' + tokenId + '_single');
-	if (!await window.craftnft.isMintAvailable(session, tokenId, 0)) {
+
+	const mintedTokenData = await window.craftnft.getMintedToken(session, tokenId, 0);
+	console.debug('retrieved minted single token data', mintedTokenData);
+
+	if (!mintedTokenData.mintable) {
 		console.debug('token ' + tokenId + ' is already minted');
 		li.innerHTML = '(already minted)';
 	} else {
@@ -129,9 +131,15 @@ async function uiViewToken(tokenId) {
 		batch_shit.removeChild(batch_shit.lastChild);
 	}
 
+	const tokenChainData = await window.craftnft.getTokenChainData(session, tokenId);
+	console.debug('retrieved token chain data', tokenChainData);
+
 	document.getElementById('token_id').innerHTML = tokenId;
 	document.getElementById('token_name').innerHTML = tokenData.name;
 	document.getElementById('token_description').innerHTML = tokenData.description;
+	document.getElementById('token_cap').innerHTML = tokenChainData.issue.cap;
+
+
 	window.craftnft.getBatches(session, tokenId, (batch, count, cursor) => {
 		if (batch == -1) {
 			uiViewTokenSingle(tokenId);

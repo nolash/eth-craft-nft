@@ -270,7 +270,7 @@ class CraftNFT(ERC721):
             return MintedToken(addr, token_id=token_id, batched=True, minted=True)
 
         o = MintedToken(addr, minted=True)
-        o.index = int(token_id[59:], 16)
-        o.batch = int(token_id[54:59], 16)
-        o.token_id = token_id[:54] + v[2:12]
+        o.index = int(token_id[48:52], 16)
+        o.batch = int(token_id[52:64], 16)
+        o.token_id = token_id[:48] + v[2:18]
         return o

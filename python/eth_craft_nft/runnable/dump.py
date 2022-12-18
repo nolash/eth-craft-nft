@@ -29,6 +29,7 @@ from chainlib.eth.cli.log import process_log
 from chainlib.eth.cli.config import Config
 from chainlib.eth.cli.config import process_config
 from hexathon import strip_0x
+from hexathon import add_0x
 
 # local imports
 from eth_craft_nft import CraftNFT
@@ -87,9 +88,9 @@ def render_token_batches(c, conn, token_address, token_id, w=sys.stdout):
         spec = c.parse_token_spec(r)
 
         for j in range(spec.cursor):
-            cursor_hex = j.to_bytes(3, byteorder='big').hex()
-            batch_hex = i.to_bytes(3, byteorder='big').hex()
-            token_id_indexed = token_id[:54] + batch_hex[1:] + cursor_hex[1:]
+            cursor_hex = j.to_bytes(6, byteorder='big').hex()
+            batch_hex = i.to_bytes(2, byteorder='big').hex()
+            token_id_indexed = token_id[:48] + batch_hex + cursor_hex
             render_token_mint(c, conn, token_address, token_id_indexed, w=w)
 
         i += 1
@@ -99,6 +100,7 @@ def render_token_mint(c, conn, token_address, token_id, w=sys.stdout):
     o = c.get_token(token_address, token_id)
     r = conn.do(o)
     token = c.parse_token(r, token_id)
+    logg.info('specccc {} {}'.format(token_id, token))
     if token.minted:
         w.write('token {}\n'.format(token))
 

@@ -1,0 +1,1 @@
+- Sometimes when clicking mint the metamask signer does not trigger. If mint is clicked a second time, it always appears. Detected with metamask 10.22.2 , chromium 108.0.5359.98

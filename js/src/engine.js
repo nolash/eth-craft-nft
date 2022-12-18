@@ -67,6 +67,38 @@ async function mintToken(session, tokenId, batch, recipient) {
 	});
 }
 
+async function getMintedToken(session, tokenId, batch) {
+	let o = {
+		mintable: false,
+		single: false,
+		cap: 0,
+		count: 0,
+		sparse: false,
+	}
+	let token = await session.contract.methods.token('0x' + tokenId, batch).call({from: session.account});
+	if (token === undefined) {
+		return o;
+	}
+	if (batch == 0) {
+		if (token.count == 0) {
+			o.cap = 1;
+			o.count = parseInt(token.cursor);
+			if (token.cursor == 0) {
+				o.mintable = true;
+			}
+			o.single = true;
+			return o;
+		}
+	}
+	o.sparse = token.sparse;
+	o.cap = token.count;
+	o.count = token.cursor;
+	if (token.cursor < token.count) {
+		o.mintable = true;
+	}
+	return o;
+}
+
 async function isMintAvailable(session, tokenId, batch) {
 	let token = await session.contract.methods.token('0x' + tokenId, batch).call({from: session.account});
 	if (token === undefined) {
@@ -147,7 +179,7 @@ async function toToken(session, tokenId, tokenContent) {
 	return data;
 }
 
-async function getMintedToken(session, tokenId) {
+async function getTokenChainData(session, tokenId) {
 	console.log('query for', tokenId);
 	const v = await session.contract.methods.mintedToken('0x' + tokenId).call({from: session.account});
 	
@@ -210,5 +242,6 @@ module.exports = {
 	mintToken: mintToken,
 	isMintAvailable: isMintAvailable,
 	isOwner: isOwner,
+	getTokenChainData: getTokenChainData,
 	getMintedToken: getMintedToken,
 };
