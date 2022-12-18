@@ -17,6 +17,9 @@ window.addEventListener('tokenBatch', async (e) => {
 	if (e.detail.tokenId != currentTokenId) {
 		throw 'batch event without matching token ' + tokenId + ' in view';
 	}
+	const mintedToken = await window.craftnft.getMintedToken(session, e.detail.tokenId);
+	console.debug('retrieved minted token data', mintedToken);
+
 	const li = document.createElement('li');
 	const span = document.createElement('span');
 	li.setAttribute('id', 'token_' + e.detail.tokenId + ' _batch_' + e.detail.batch);
@@ -95,6 +98,10 @@ async function uiMintToken(tokenId, batch) {
 
 async function uiViewTokenSingle(tokenId) {
 	let li = document.createElement('li');
+
+	const mintedToken = await window.craftnft.getMintedToken(session, tokenId);
+	console.debug('retrieved minted single token data', mintedToken);
+
 	li.setAttribute('id', 'token_' + tokenId + '_single');
 	if (!await window.craftnft.isMintAvailable(session, tokenId, 0)) {
 		console.debug('token ' + tokenId + ' is already minted');
@@ -115,6 +122,7 @@ async function uiViewTokenSingle(tokenId) {
 async function uiViewToken(tokenId) {
 	const r = await session.contentGateway.get(tokenId);
 	const tokenData = JSON.parse(r);
+
 
 	const batch_shit = document.getElementById('token_batches');
 	while (batch_shit.lastChild) {

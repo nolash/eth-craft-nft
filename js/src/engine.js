@@ -83,6 +83,79 @@ async function isMintAvailable(session, tokenId, batch) {
 	return false;
 }
 
+async function toToken(session, tokenId, tokenContent) {
+	console.log('process token content', tokenContent);
+	if (tokenId.substring(0, 2) == '0x') {
+		tokenId = tokenId.substring(2);
+	}
+
+	if (tokenContent.substring(0, 2) == '0x') {
+		tokenContent = tokenContent.substring(2);
+	}
+	
+	const v = parseInt(tokenContent.substring(0, 2), 16);
+	console.debug('vvv', v);
+	let data = {
+		tokenId: tokenId,
+		minted: false,
+		mintedTokenId: undefined,
+		owner: undefined,
+		issue: undefined,
+		batches: undefined,
+		sparse: false,
+	};
+
+	let k = tokenId;
+	let issue = undefined;
+
+	if ((v & 0x80) == 0) {
+		if ((v & 0x40) == 0) {
+			issue = {};
+			// TODO: the cap may be larger as we need to process for all batches, not matter whether theyre minted or not
+			//const token = await session.contract.methods.token('0x' + tokenId, 0).call({from: session.account});
+			const state = await getBatches(session, tokenId);
+			data.batches = state.batches;
+			issue.cap = state.cap;
+			issue.count = state.count;
+			data.issue = issue;
+			return data;	
+		}
+	}
+
+	data.minted = true;
+
+	issue = {}
+	if ((v & 0x40) == 0) {
+		k = tokenId.substring(0, 48) + tokenContent.substring(2, 18);
+		issue.batch = parseInt(tokenId.substring(48, 50), 16);
+		issue.index = parseInt(tokenId.substring(50, 64), 16);
+
+		data.cap = parseInt(token.count);
+		data.count = parseInt(token.cursor);
+		data.sparse = token.sparse;
+	} else {
+		data.batches = 0;
+		issue.cap = 1;
+		issue.count = 1;
+		data.issue = issue;	
+	}
+
+	data.issue = issue;
+	data.tokenId = k;
+	data.owner = tokenContent.substring(24);
+
+	return data;
+}
+
+async function getMintedToken(session, tokenId) {
+	console.log('query for', tokenId);
+	const v = await session.contract.methods.mintedToken('0x' + tokenId).call({from: session.account});
+	
+	const mintedToken = await toToken(session, tokenId, v);
+
+	return mintedToken;
+}
+
 async function getBatches(session, tokenId, callback) {
 	let token = await session.contract.methods.token('0x' + tokenId, 0).call({from: session.account});
 	if (token.count == 0) {
@@ -90,17 +163,31 @@ async function getBatches(session, tokenId, callback) {
 		return;
 	}
 
-	callback(0, token.count, token.cursor);
+	if (callback !== undefined) {
+		callback(0, token.count, token.cursor);
+	}
+
 	let i = 1;
+	let count = parseInt(token.cursor);
+	let cap = parseInt(token.count);
 	while (true) {
 		try {
 			token = await session.contract.methods.token('0x' + tokenId, 1).call({from: session.account});
 		} catch(e) {
 			break;
 		}
-		callback(i, token.count, token.cursor);
+		if (callback !== undefined) {
+			callback(i, token.count, token.cursor);
+		}
 		i++;
+		count += parseInt(token.cursor);
+		cap += parseInt(token.count);
 	}
+	return {
+		batches: i,
+		count: count,
+		cap: cap,
+	};
 }
 
 async function isOwner(session, address) {
@@ -123,4 +210,5 @@ module.exports = {
 	mintToken: mintToken,
 	isMintAvailable: isMintAvailable,
 	isOwner: isOwner,
+	getMintedToken: getMintedToken,
 };
