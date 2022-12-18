@@ -7,6 +7,7 @@ contract CraftNFT {
 		uint48 count;
 		uint48 cumulativeCount;
 		uint48 cursor;
+		bool sparse;
 	}
 	address public owner;
 	bytes32[] public tokens;
@@ -67,6 +68,7 @@ contract CraftNFT {
 		uint256 l;
 		uint48 _cumulativeCount;
 		require(msg.sender == owner);
+		
 		tokenSpec memory _token;
 
 		l = token[content].length;
@@ -127,29 +129,59 @@ contract CraftNFT {
 	}
 
 	function mintFromBatchTo(address _recipient, bytes32 _content, uint256 _batch) public returns (bytes32) {
-		uint256 left;
-		uint256 right;
 		tokenSpec storage spec;
 	
 		spec = token[_content][_batch];
+
+		require(!spec.sparse);
 		if (_batch == 0 && spec.count == 0) {
 			spec.cursor += 1;
 			return mintTo(_recipient, _content);
 		}
 		require(msg.sender == owner);
 		require(spec.cursor < spec.count);
+		return mintBatchCore(_recipient, _content, _batch, spec.cursor, spec);
+	}
+
+
+	function mintExactFromBatchTo(address _recipient, bytes32 _content, uint256 _batch, uint48 _index) public returns (bytes32) {
+		tokenSpec storage spec;
+
+		spec = token[_content][_batch];
+		require(msg.sender == owner);
+		require(spec.count > 0);
+		require(_index < spec.count);
+		return mintBatchCore(_recipient, _content, _batch, _index, spec);
+	}
+
+
+	function mintBatchCore(address _recipient, bytes32 _content, uint256 _batch, uint48 _index, tokenSpec storage _spec) private returns (bytes32) {
+		uint256 left;
+		uint256 right;
+		bytes32 k;
+	
+		left = uint256(_content) & 0xffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000;
+		left |= (_batch << 20);
+		left |= _index;	
+		k = bytes32(left);
+	
+		require(mintedToken[k] == bytes32(0x00));
+		
+		if (!_spec.sparse) {
+			if (_index != _spec.cursor) {
+				_spec.sparse = true;
+			}
+		}
 
 		right = uint256(_content) & ((1 << 40) - 1);
 		right <<= 208;
 		right |= (1 << 255);
 		right |= uint160(_recipient);
 
-		left = uint256(_content) & 0xffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000;
-		left |= (_batch << 20);
-		left |= spec.cursor;
+		_spec.cursor += 1;
+		mintedToken[k] = bytes32(right);
 
-		spec.cursor += 1;
-		mintedToken[bytes32(left)] = bytes32(right);
+		return k;
 	}
 	
 	// ERC-721

@@ -227,7 +227,7 @@ class Test(EthTesterCase):
         self.assertEqual(r['status'], 1)
 
         expected_id = hash_of_foo[:64-10] + '0000000000'
-        o = c.get_token_raw(self.address, expected_id, sender_address=self.accounts[0])
+        o = c.get_token(self.address, expected_id, sender_address=self.accounts[0])
         r = self.rpc.do(o)
 
         o = c.owner_of(self.address, int(expected_id, 16), sender_address=self.accounts[0])
@@ -242,7 +242,7 @@ class Test(EthTesterCase):
         self.assertEqual(r['status'], 1)
 
         expected_id = hash_of_foo[:64-10] + '0000000001'
-        o = c.get_token_raw(self.address, expected_id, sender_address=self.accounts[0])
+        o = c.get_token(self.address, expected_id, sender_address=self.accounts[0])
         r = self.rpc.do(o)
 
         o = c.owner_of(self.address, int(expected_id, 16), sender_address=self.accounts[0])
@@ -347,7 +347,7 @@ class Test(EthTesterCase):
         (tx_hash_hex, o) = c.mint_to(self.address, self.accounts[0], self.accounts[1], hash_of_foo, 0)
         self.rpc.do(o)
 
-        o = c.get_token_raw(self.address, hash_of_foo, sender_address=self.accounts[0])
+        o = c.get_token(self.address, hash_of_foo, sender_address=self.accounts[0])
         r = self.rpc.do(o)
 
         o = c.get_digest(self.address, hash_of_foo, sender_address=self.accounts[0])
