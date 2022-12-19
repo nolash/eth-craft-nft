@@ -2,7 +2,6 @@ pragma solidity >= 0.8.0;
 
 
 contract CraftNFT {
-
 	// Defines the behavior of a single token batch.
 	// 
 	// count defines the amount of tokens there are in a batch. A count of 0 indicates a unique token.
@@ -17,7 +16,13 @@ contract CraftNFT {
 		uint48 cursor;
 		bool sparse;
 	}
+
+	// The owner of the token contract.
+	// Only the owner may mint tokens.
 	address public owner;
+
+	// If set, ownership of the token contract cannot change.
+	bool ownerFinal;
 
 	// Collection of all unique token keys
 	bytes32[] public tokens;
@@ -25,7 +30,8 @@ contract CraftNFT {
 	// Define each batch of a token. (A unqiue token will have a single entry only).
 	mapping(bytes32 => tokenSpec[]) public token;
 
-	// Individual tokens from batches. A unique token is also represented by the same content.
+	// All Minted Tokens.
+	// Represents both Unique Tokens and Batch Tokens.
 	mapping(bytes32 => bytes32) public mintedToken;
 
 	// Registry for the approve() method
@@ -40,7 +46,11 @@ contract CraftNFT {
 	// ERC-721 (Metadata - optional)
 	string public symbol;
 
+	// The total Token Allocations across all tokens, regardless of whether they have been minted or not.
 	uint256 supply;
+
+	// The digest of a human-readable resource that describes the rationale and terms for all tokens created by this contract.
+	bytes32 public declaration;
 
 	// ERC-721
 	event Transfer(address indexed _from, address indexed _to, uint256 indexed _tokenId);
@@ -54,18 +64,31 @@ contract CraftNFT {
 	// Minter
 	event Mint(address indexed _minter, address indexed _beneficiary, uint256 value);
 
-	constructor(string memory _name, string memory _symbol) {
+	constructor(string memory _name, string memory _symbol, bytes32 _declaration) {
 		owner = msg.sender;
+		declaration =_declaration;
 		name = _name;
 		symbol = _symbol;
 	}
 
-	// Check bit that is always set on the content data when a token has been minted
+	// Transfer ownership of token contract to new owner.
+	//
+	// If _final is true, future ownership transfers will not be permitted.
+	function transferOwnership(address _newOwner, bool _final) public returns(bool) {
+		require(msg.sender, owner);
+		require(!ownerFinal);
+		if (_final) {
+			ownerFinal = true;
+		}
+		owner = _newOwner;
+	}
+
+	// Check bit that is always set on the content data when a token has been minted.
 	function isActive(bytes32 _tokenContent) private view returns(bool) {
 		return uint256(_tokenContent) & 0x8000000000000000000000000000000000000000000000000000000000000000 > 0;
 	}
 
-	// Returns true if the content data belongs to a unique token
+	// Returns true if the content data belongs to a Unique Token
 	function isSingle(bytes32 _tokenContent) private view returns(bool) {
 		return uint256(_tokenContent) & 0x4000000000000000000000000000000000000000000000000000000000000000 > 0;
 	}

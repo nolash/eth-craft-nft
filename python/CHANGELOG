@@ -1,0 +1,4 @@
+- 0.0.2
+	* Add allocate and mint CLI tools
+- 0.0.1
+	* Base implementation

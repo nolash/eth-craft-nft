@@ -1,9 +1,9 @@
 function Wala(url) {
-	this.url = url;
+	this._url = url;
 }
 
 Wala.prototype.put = async function(v) {
-	let r = await fetch(this.url, {
+	let r = await fetch(this._url, {
 		method: 'put',
 		body: v,
 	});
@@ -14,9 +14,14 @@ Wala.prototype.put = async function(v) {
 }
 
 Wala.prototype.get = async function(k) {
-	let r = await fetch(this.url + '/' + k);
+	const url = this.url(k)
+	let r = await fetch(url);
 	if (!r.ok) {
 		throw ('failed get');
 	}
 	return r.text();
+}
+
+Wala.prototype.url = function(k) {
+	return this._url + '/' + k;	
 }

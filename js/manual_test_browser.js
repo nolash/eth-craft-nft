@@ -21,7 +21,7 @@ window.addEventListener('tokenBatch', async (e) => {
 	const li = document.createElement('li');
 	const span = document.createElement('span');
 	li.setAttribute('id', 'token_' + e.detail.tokenId + ' _batch_' + e.detail.batch);
-	span.innerHTML = 'used ' + e.detail.cursor + ' of ' + e.detail.count + ' ';
+	span.innerHTML = 'minted ' + e.detail.cursor + ' of ' + e.detail.count + ' ';
 	li.appendChild(span);
 
 	const mintedTokenData = await window.craftnft.getMintedToken(session, e.detail.tokenId, e.detail.batch);
@@ -47,7 +47,10 @@ async function generatePayload() {
 		parent_nft: undefined,
 	};
 
-	const amount = document.getElementById('panel_amount').value;
+	let amount = document.getElementById('panel_amount').value;
+	if (amount === '') {
+		amount = '0';
+	}
 	tokenData.amount = parseInt(amount, 10);
 	if (isNaN(tokenData.amount)) {
 		throw 'amount must be numeric';
@@ -60,9 +63,15 @@ async function generatePayload() {
 	sha_raw.update(s);
 	const digest = sha_raw.getHash("HEX");
 
-	let r = await session.contentGateway.put(s);
-	if (r != digest) {
-		throw 'digest mismatch (' + r + ' != ' + digest + ')';
+	if (session.contentGateway !== undefined) {
+		try {
+			let r = await session.contentGateway.put(s);
+			if (r != digest) {
+				throw 'digest mismatch (' + r + ' != ' + digest + ')';
+			}
+		} catch(e) {
+			console.error('failed to upload token data:', e);
+		}
 	}
 	
 	const tokenRequestEvent = new CustomEvent('tokenRequest', {
@@ -122,9 +131,21 @@ async function uiViewTokenSingle(tokenId) {
 
 
 async function uiViewToken(tokenId) {
-	const r = await session.contentGateway.get(tokenId);
-	const tokenData = JSON.parse(r);
-
+	
+	let tokenData = {
+		name: '(unavailable)',
+		description: '(unavailable)',
+	};
+	if (session.contentGateway !== undefined) {
+		try {
+			const r = await session.contentGateway.get(tokenId);
+			tokenData = JSON.parse(r);
+		} catch(e) {
+			tokenData.name = '(failed)';
+			tokenData.description = '(failed)';
+			console.error('could not fetch token content:', e);
+		}
+	}
 
 	const batch_shit = document.getElementById('token_batches');
 	while (batch_shit.lastChild) {
@@ -174,7 +195,10 @@ async function uiCreateToken() {
 async function run(w3, generated_session) {
 	session = generated_session;
 	console.debug('running with session', session);
-	session.contentGateway = new Wala('http://localhost:8001');
+
+	if (session.contentGatewayUrl !== undefined) {
+		session.contentGateway = new Wala('http://localhost:8001');
+	}
 	const account = document.getElementById('data_account');
 	let s = document.createElement('span');
 	s.innerHTML = session.account; 
@@ -197,6 +221,17 @@ async function run(w3, generated_session) {
 	document.getElementById('data_supply').innerHTML = session.supply;
 	document.getElementById('panel_submit').addEventListener('click', generatePayload);
 	document.getElementById('mint_submit').addEventListener('click', generateMint);
+
+	if (session.contentGateway !== undefined) {
+		declarationUrl = session.contentGateway.url(session.declarationHash);
+		let a = document.createElement('a')
+		a.setAttribute('href', declarationUrl);
+		a.innerHTML = declarationUrl;
+		document.getElementById('data_declaration').appendChild(a);
+	} else {
+		document.getElementById('data_declaration').innerHTML = 'sha256:' + session.declarationHash;
+	}
+
 	window.craftnft.getTokens(w3, session, (tokenId) => {
 		if (tokenId.substring(0, 2) == '0x') {
 			tokenId = tokenId.substring(2);

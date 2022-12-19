@@ -1,6 +1,9 @@
 {
 	"name": "craft_nft",
 	"version": "0.0.1",
+	"description": "Javascript library for the Craft NFT smart contract implementation",
+	"author": "Louis Holbrook <npm@holbrook.no> (https://holbrook.no)",
+	"license": "WTFPL",
 	"dependencies": {
 		"web3": "~1.8.1",
 		"@metamask/sdk": "~0.1.0",

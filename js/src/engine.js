@@ -22,10 +22,15 @@ async function startSession(w3, config, session, runner) {
 	const acc = await w3.eth.getAccounts();
 	session.account = acc[0];
 	session.contractAddress = config.contract;
+	session.contentGatewayUrl = config.contentGatewayUrl;
 	session.contract = loadContract(w3, config);
 	session.name = await session.contract.methods.name().call({from: session.account});
 	session.symbol = await session.contract.methods.symbol().call({from: session.account});
 	session.supply = await session.contract.methods.totalSupply().call({from: session.account});
+	session.declarationHash = await session.contract.methods.declaration().call({from: session.account});
+	if (session.declarationHash.substring(0,2) == '0x') {
+		session.declarationHash = session.declarationHash.substring(2);
+	}
 	runner(w3, session);
 }
 
@@ -184,7 +189,7 @@ async function getTokenChainData(session, tokenId) {
 
 async function getBatches(session, tokenId, callback) {
 	let token = await session.contract.methods.token('0x' + tokenId, 0).call({from: session.account});
-	if (token.count == 0) {
+	if (token.count == 0 && callback !== undefined) {
 		callback(-1);
 		return;
 	}

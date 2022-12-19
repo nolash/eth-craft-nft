@@ -1,4 +1,4 @@
-"""Deploys badge NFT
+"""Output information about all minted tokens
 
 .. moduleauthor:: Louis Holbrook <dev@holbrook.no>
 .. pgp:: 0826EDA1702D1E87C6E2875121D2E7BB88C2A746 
