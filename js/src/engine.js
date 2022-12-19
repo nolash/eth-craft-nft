@@ -26,7 +26,6 @@ async function startSession(w3, config, session, runner) {
 	session.name = await session.contract.methods.name().call({from: session.account});
 	session.symbol = await session.contract.methods.symbol().call({from: session.account});
 	session.supply = await session.contract.methods.totalSupply().call({from: session.account});
-	console.debug('session', session);
 	runner(w3, session);
 }
 
@@ -45,7 +44,6 @@ async function getTokens(w3, session, callback) {
 		} catch(e) {
 			break;
 		};
-		console.debug('found token', token);
 		i++;
 	}
 }
@@ -60,7 +58,6 @@ async function allocateToken(session, tokenId, amount) {
 async function mintToken(session, tokenId, batch, recipient) {
 	const w3 = new Web3();
 	const address = await w3.utils.toChecksumAddress(recipient);
-	console.log('address', address, recipient);
 	session.contract.methods.mintFromBatchTo(address, '0x' + tokenId, batch).send({
 		from: session.account,
 		value: 0,
@@ -116,7 +113,6 @@ async function isMintAvailable(session, tokenId, batch) {
 }
 
 async function toToken(session, tokenId, tokenContent) {
-	console.log('process token content', tokenContent);
 	if (tokenId.substring(0, 2) == '0x') {
 		tokenId = tokenId.substring(2);
 	}
@@ -126,7 +122,6 @@ async function toToken(session, tokenId, tokenContent) {
 	}
 	
 	const v = parseInt(tokenContent.substring(0, 2), 16);
-	console.debug('vvv', v);
 	let data = {
 		tokenId: tokenId,
 		minted: false,
@@ -180,7 +175,6 @@ async function toToken(session, tokenId, tokenContent) {
 }
 
 async function getTokenChainData(session, tokenId) {
-	console.log('query for', tokenId);
 	const v = await session.contract.methods.mintedToken('0x' + tokenId).call({from: session.account});
 	
 	const mintedToken = await toToken(session, tokenId, v);

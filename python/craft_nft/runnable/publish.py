@@ -30,7 +30,7 @@ from chainlib.eth.cli.config import Config
 from chainlib.eth.cli.config import process_config
 
 # local imports
-from eth_craft_nft import CraftNFT
+from craft_nft import CraftNFT
 
 logg = logging.getLogger()
 

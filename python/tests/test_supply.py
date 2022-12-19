@@ -30,8 +30,8 @@ from chainlib.eth.contract import ABIContractType
 
 
 # local imports
-from eth_craft_nft import CraftNFT
-from eth_craft_nft.error import InvalidBatchError
+from craft_nft import CraftNFT
+from craft_nft.error import InvalidBatchError
 
 logging.basicConfig(level=logging.DEBUG)
 logg = logging.getLogger()

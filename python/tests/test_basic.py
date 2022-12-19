@@ -27,12 +27,12 @@ from hexathon import (
         )
 from chainlib.eth.tx import TxFormat
 from chainlib.eth.contract import ABIContractEncoder
-from chainlib.eth.contract import ABIContractType
 
 
 # local imports
-from eth_craft_nft import CraftNFT
-from eth_craft_nft.error import InvalidBatchError
+from craft_nft import CraftNFT
+from craft_nft.error import InvalidBatchError
+from craft_nft.eth import ABIContractType
 
 logging.basicConfig(level=logging.DEBUG)
 logg = logging.getLogger()

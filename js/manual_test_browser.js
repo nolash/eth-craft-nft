@@ -173,6 +173,7 @@ async function uiCreateToken() {
 
 async function run(w3, generated_session) {
 	session = generated_session;
+	console.debug('running with session', session);
 	session.contentGateway = new Wala('http://localhost:8001');
 	const account = document.getElementById('data_account');
 	let s = document.createElement('span');

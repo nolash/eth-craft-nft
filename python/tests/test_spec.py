@@ -31,8 +31,8 @@ from chainlib.eth.contract import ABIContractType
 
 
 # local imports
-from eth_craft_nft import CraftNFT
-from eth_craft_nft.error import InvalidBatchError
+from craft_nft import CraftNFT
+from craft_nft.error import InvalidBatchError
 
 logging.basicConfig(level=logging.DEBUG)
 logg = logging.getLogger()
@@ -76,7 +76,6 @@ class Test(EthTesterCase):
         r = self.rpc.do(o)
         spec = c.parse_token_spec(r) 
         self.assertEqual(spec.count, 3)
-        self.assertEqual(spec.cumulative_count, 5)
         self.assertEqual(spec.cursor, 1)
 
 

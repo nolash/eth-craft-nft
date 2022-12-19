@@ -9,7 +9,6 @@ from hexathon import add_0x
 from hexathon import strip_0x
 from chainlib.eth.contract import ABIContractEncoder
 from chainlib.eth.contract import ABIContractDecoder
-from chainlib.eth.contract import ABIContractType
 from chainlib.eth.contract import abi_decode_single
 from chainlib.jsonrpc import JSONRPCRequest
 from chainlib.eth.constant import ZERO_ADDRESS
@@ -17,7 +16,8 @@ from chainlib.eth.constant import ZERO_CONTENT
 from chainlib.eth.address import to_checksum_address
 
 # local imports
-from eth_craft_nft.error import InvalidBatchError
+from .error import InvalidBatchError
+from .eth import ABIContractType
 
 moddir = os.path.dirname(__file__)
 datadir = os.path.join(moddir, 'data')

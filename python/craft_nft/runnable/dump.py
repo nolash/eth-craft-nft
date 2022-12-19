@@ -32,7 +32,7 @@ from hexathon import strip_0x
 from hexathon import add_0x
 
 # local imports
-from eth_craft_nft import CraftNFT
+from craft_nft import CraftNFT
 
 logg = logging.getLogger()
 
@@ -51,6 +51,8 @@ def process_config_local(config, arg, args, flags):
             contract = stdin_arg()
 
     config.add(contract, '_CONTRACT', False)
+
+    config.add(100000, '_FEE_LIMIT', True)
     return config
 
 
