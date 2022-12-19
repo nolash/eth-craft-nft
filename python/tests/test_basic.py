@@ -299,6 +299,27 @@ class Test(EthTesterCase):
         self.assertTrue(is_same_address(owner[24:], self.accounts[2]))
 
 
+    def test_transfer_batched(self):
+        nonce_oracle = RPCNonceOracle(self.accounts[0], self.rpc)
+        c = CraftNFT(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
+
+        (tx_hash_hex, o) = c.allocate(self.address, self.accounts[0], hash_of_foo, amount=10)
+        self.rpc.do(o)
+
+        (tx_hash_hex, o) = c.mint_to(self.address, self.accounts[0], self.accounts[1], hash_of_foo, 0)
+        self.rpc.do(o)
+
+        expected_id = hash_of_foo[:64-16] + '0000000000000000'
+        int_of_foo = int(expected_id, 16)
+
+        nonce_oracle = RPCNonceOracle(self.accounts[1], self.rpc)
+        c = CraftNFT(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
+        (tx_hash, o) = c.transfer_from(self.address, self.accounts[1], self.accounts[1], self.accounts[2], int_of_foo)
+        self.rpc.do(o)
+        o = receipt(tx_hash_hex)
+        r = self.conn.do(o)
+        self.assertEqual(r['status'], 1)
+
 
     def test_fill_batches(self):
         nonce_oracle = RPCNonceOracle(self.accounts[0], self.rpc)

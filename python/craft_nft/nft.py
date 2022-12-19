@@ -26,6 +26,17 @@ INVALID_BATCH = (2**256)-1
 
 logg = logging.getLogger(__name__)
 
+
+def to_batch_key(token_id, batch, index):
+        token_id = strip_0x(token_id)
+        if len(token_id) != 64:
+            raise ValueError('token id must be 32 bytes')
+        token_id = token_id[:48]
+        token_id += batch.to_bytes(2, byteorder='big').hex()
+        token_id += index.to_bytes(6, byteorder='big').hex()
+        return token_id
+
+
 class TokenSpec:
 
     def __init__(self, count, cursor):
@@ -51,15 +62,17 @@ class MintedToken:
     def __str__(self):
         owner = to_checksum_address(self.owner)
         if self.batched:
-            return '{} owned {}'.format(
+            return '{} owned by {}'.format(
                     self.token_id,
                     owner,
                     )
-        return '{} batch {} index {} owned by {}'.format(
+        token_key = to_batch_key(self.token_id, self.batch, self.index)
+        return '{} owned by {} - (id {} batch {} index {})'.format(
+                token_key,
+                owner,
                 self.token_id,
                 self.batch,
                 self.index,
-                owner,
                 )
 
 
@@ -91,7 +104,9 @@ class CraftNFT(ERC721):
         return 4000000
 
     
-    def constructor(self, sender_address, name, symbol, declaration, tx_format=TxFormat.JSONRPC):
+    def constructor(self, sender_address, name, symbol, declaration=None, tx_format=TxFormat.JSONRPC):
+        if declaration == None:
+            declaration = strip_0x(ZERO_CONTENT)
         code = CraftNFT.bytecode()
         enc = ABIContractEncoder()
         enc.string(name)
@@ -153,6 +168,7 @@ class CraftNFT(ERC721):
         raise ValueError(super_index)
 
 
+    
     def get_token_spec(self, contract_address, token_id, batch, sender_address=ZERO_ADDRESS, id_generator=None):
         j = JSONRPCRequest(id_generator)
         o = j.template()

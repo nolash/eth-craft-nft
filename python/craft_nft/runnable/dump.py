@@ -33,6 +33,7 @@ from hexathon import add_0x
 
 # local imports
 from craft_nft import CraftNFT
+from craft_nft.nft import to_batch_key
 
 logg = logging.getLogger()
 
@@ -90,9 +91,7 @@ def render_token_batches(c, conn, token_address, token_id, w=sys.stdout):
         spec = c.parse_token_spec(r)
 
         for j in range(spec.cursor):
-            cursor_hex = j.to_bytes(6, byteorder='big').hex()
-            batch_hex = i.to_bytes(2, byteorder='big').hex()
-            token_id_indexed = token_id[:48] + batch_hex + cursor_hex
+            token_id_indexed = to_batch_key(token_id, i, j)
             render_token_mint(c, conn, token_address, token_id_indexed, w=w)
 
         i += 1

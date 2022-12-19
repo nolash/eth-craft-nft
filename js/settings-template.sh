@@ -1,0 +1,4 @@
+{
+	"contract": "0x0000000000000000000000000000000000000000",
+	"contentGatewayUrl": null
+}

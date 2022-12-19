@@ -30,6 +30,7 @@ from chainlib.eth.cli.log import process_log
 from chainlib.eth.cli.config import Config
 from chainlib.eth.cli.config import process_config
 from chainlib.eth.constant import ZERO_CONTENT
+from chainlib.eth.address import to_checksum_address
 from hexathon import strip_0x
 
 # local imports
@@ -44,11 +45,19 @@ def process_config_local(config, arg, args, flags):
     config.add(token_id, '_TOKEN_ID', False)
 
     config.add(args.batch, '_TOKEN_BATCH', False)
+
+    if args.fee_limit == None:
+        config.add(200000, '_FEE_LIMIT', True)
+
     return config
 
 
 def process_settings_local(settings, config):
     settings.set('TOKEN_ID', config.get('_TOKEN_ID'))
+
+    if config.get('_POSARG') != None:
+        recipient = to_checksum_address(config.get('_POSARG'))
+        settings.set('RECIPIENT', recipient)
 
     if (config.get('_TOKEN_BATCH') != None):
         settings.set('TOKEN_BATCH', config.get('_TOKEN_BATCH'))
@@ -85,12 +94,13 @@ argparser = process_args(argparser, arg, flags)
 argparser.add_argument('--token-id', type=str, required=True, help='Token id to mint from')
 argparser.add_argument('--check', action='store_true', help='Only check whether a token can be minted')
 argparser.add_argument('--batch', type=int, help='Mint from the given batch. If not specified, the first mintable batch will be used')
+argparser.add_argument('token_recipient', type=str, nargs='*', help='Recipient address')
 args = argparser.parse_args(sys.argv[1:])
 
 logg = process_log(args, logg)
 
 config = Config()
-config = process_config(config, arg, args, flags, positional_name='token_id')
+config = process_config(config, arg, args, flags, positional_name='token_recipient')
 config = process_config_local(config, arg, args, flags)
 logg.debug('config loaded:\n{}'.format(config))
 
@@ -98,7 +108,7 @@ settings = ChainSettings()
 settings = process_settings(settings, config)
 settings = process_settings_local(settings, config)
 logg.debug('settings loaded:\n{}'.format(settings))
-exit
+
 
 def main():
     conn = settings.get('CONN')
@@ -125,12 +135,7 @@ def main():
             if r['status'] == 0:
                 sys.stderr.write('EVM revert while deploying contract. Wish I had more to tell you')
                 sys.exit(1)
-            # TODO: pass through translator for keys (evm tester uses underscore instead of camelcase)
-            address = r['contractAddress']
-
-            print(address)
-        else:
-            print(tx_hash_hex)
+        print(tx_hash_hex)
     else:
         print(o)
 

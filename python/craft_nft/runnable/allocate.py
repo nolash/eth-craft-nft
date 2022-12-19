@@ -45,8 +45,11 @@ def process_config_local(config, arg, args, flags):
 
     assert args.count < 2**48
     config.add(args.count, '_TOKEN_COUNT', False)
-    return config
 
+    if args.fee_limit == None:
+        config.add(200000, '_FEE_LIMIT', True)
+
+    return config
 
 arg_flags = ArgFlag()
 arg = Arg(arg_flags)
@@ -54,7 +57,7 @@ flags = arg_flags.STD_WRITE | arg_flags.CREATE | arg_flags.VALUE | arg_flags.TAB
 
 argparser = chainlib.eth.cli.ArgumentParser()
 argparser = process_args(argparser, arg, flags)
-argparser.add_argument('--count', default=0, type=int, required=True, help='Amount of tokens in batch')
+argparser.add_argument('--count', default=0, type=int, help='Amount of tokens in batch')
 argparser.add_argument('token_id', type=str, nargs='*', help='token id: sha256 sum of token data, in hex')
 args = argparser.parse_args(sys.argv[1:])
 
@@ -96,12 +99,8 @@ def main():
             if r['status'] == 0:
                 sys.stderr.write('EVM revert while deploying contract. Wish I had more to tell you')
                 sys.exit(1)
-            # TODO: pass through translator for keys (evm tester uses underscore instead of camelcase)
-            address = r['contractAddress']
 
-            print(address)
-        else:
-            print(tx_hash_hex)
+        print(tx_hash_hex)
     else:
         print(o)
 
