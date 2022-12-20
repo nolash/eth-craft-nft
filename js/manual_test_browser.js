@@ -1,3 +1,9 @@
+// This file contains a rought-edged example implementation of a user interface for reading and writing Craft NFT tokens.
+
+
+/**
+ * Emitted when a new token has been found.
+ */
 window.addEventListener('token', (e) => {
 	const li = document.createElement('li');
 	const a = document.createElement('a');
@@ -9,6 +15,9 @@ window.addEventListener('token', (e) => {
 });
 
 
+/**
+ * Emitted when a new batch allocation of a token has been found.
+ */
 window.addEventListener('tokenBatch', async (e) => {
 	let currentTokenId = document.getElementById('token_id').innerHTML;
 	if (currentTokenId.substring(0, 2) == '0x') {
@@ -38,7 +47,14 @@ window.addEventListener('tokenBatch', async (e) => {
 });
 
 
-async function generatePayload() {
+/**
+ * Request creation of a new token allocation.
+ *
+ * Parameters for the allocation are read directly from the DOM.
+ *
+ * Interpreted parameters are emitted with the tokenRequest event.
+ */
+async function generateAllocation() {
 	let tokenData = {
 		name: undefined,
 		description: undefined,
@@ -86,16 +102,36 @@ async function generatePayload() {
 }
 
 
+/**
+ * Request minting of a new token from an existing allocation.
+ *
+ * Parameters for the minting are read directly from the DOM.
+ *
+ * Interpreted parameters are emitted with the tokenMint event.
+ */
 async function generateMint() {
 	const tokenId = document.getElementById('token_mint_id').innerHTML;
 	let batch = document.getElementById('token_mint_batch').innerHTML;
 	batch = parseInt(batch, 10);
 	const recipient = document.getElementById('token_mint_recipient').value;
-	window.craftnft.mintToken(session, tokenId, batch, recipient);
+	const tokenRequestEvent = new CustomEvent('tokenMint', {
+		detail: {
+			recipient: recipient,
+			digest: tokenId,
+			batch: batch,
+		},
+		bubbles: true,
+		cancelable: true,
+		composed: false,
+	});
+	window.dispatchEvent(tokenRequestEvent);
 	uiViewToken(tokenId);
 }
 
 
+/**
+ * Render the mint token view.
+ */
 async function uiMintToken(tokenId, batch) {
 	document.getElementById('token_mint_id').innerHTML = tokenId;
 	document.getElementById('token_mint_batch').innerHTML = batch;
@@ -106,6 +142,9 @@ async function uiMintToken(tokenId, batch) {
 }
 
 
+/**
+ * Render the Unique Token part of the allocated token view.
+ */
 async function uiViewTokenSingle(tokenId) {
 	let li = document.createElement('li');
 	li.setAttribute('id', 'token_' + tokenId + '_single');
@@ -129,6 +168,9 @@ async function uiViewTokenSingle(tokenId) {
 }
 
 
+/**
+ * Render the allocated token view.
+ */
 async function uiViewToken(tokenId) {
 	
 	let tokenData = {
@@ -184,6 +226,9 @@ async function uiViewToken(tokenId) {
 }
 
 
+/**
+ * Render the create token allocation view.
+ */
 async function uiCreateToken() {
 	document.getElementById('interactive').style.visibility = 'visible';
 	document.getElementById('detail').style.visibility = 'hidden';
@@ -191,6 +236,9 @@ async function uiCreateToken() {
 }
 
 
+/**
+ * UI entry point.
+ */
 async function run(w3, generated_session) {
 	session = generated_session;
 	console.debug('running with session', session);
@@ -218,7 +266,7 @@ async function run(w3, generated_session) {
 	document.getElementById('data_name').innerHTML = session.name;
 	document.getElementById('data_symbol').innerHTML = session.symbol;
 	document.getElementById('data_supply').innerHTML = session.supply;
-	document.getElementById('panel_submit').addEventListener('click', generatePayload);
+	document.getElementById('panel_submit').addEventListener('click', generateAllocation);
 	document.getElementById('mint_submit').addEventListener('click', generateMint);
 
 	if (session.contentGateway !== undefined) {
