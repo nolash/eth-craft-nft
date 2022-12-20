@@ -27,7 +27,6 @@ window.addEventListener('tokenBatch', async (e) => {
 	const mintedTokenData = await window.craftnft.getMintedToken(session, e.detail.tokenId, e.detail.batch);
 	console.debug('retrieved minted token data', mintedTokenData);
 
-	//const isMintable = await window.craftnft.isMintAvailable(session, e.detail.tokenId, e.detail.batch);
 	if (mintedTokenData.mintable) {
 		const a = document.createElement('a');
 		a.setAttribute('onClick', 'uiMintToken("' + e.detail.tokenId + '", ' + e.detail.batch + ')');

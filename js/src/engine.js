@@ -1,6 +1,11 @@
 const Web3 = require('web3');
 import MetaMaskSDK from '@metamask/sdk';
 
+/**
+ * Loads a chosen provider for the w3 inteface. Currently hard-coded to Metamask.
+ *
+ * @return {Object} Provider
+ */
 function loadProvider() {
 	const mm = new MetaMaskSDK({injectProvider: false});
 	const w3_provider = mm.getProvider();
@@ -8,16 +13,39 @@ function loadProvider() {
 	return w3_provider;
 }
 
+/**
+ * Returns a new web3 client instance.
+ *
+ * @return {Object} client
+ */
 function loadConn(provider) {
 	const w3 = new Web3(provider);
 	return w3;
 }
 
+/**
+ * Instantiates the token smart contract using the web3 client instance.
+ *
+ * @param {Object} client
+ * @param {Object} config
+ */
 function loadContract(w3, config) {
 	const contract = new w3.eth.Contract(config.abi, config.contract);	
 	return contract;
 }
 
+
+/**
+ * Initialize the session object using config and client.
+ *
+ * Calls runner with client and session when initialization has been completed.
+ *
+ * @param {Object} client
+ * @param {Object} config
+ * @param {Object} session
+ * @param {Function} runner
+ * @throws free-form If contract cannot be loaded, or contract interface does not meet expectations.
+ */
 async function startSession(w3, config, session, runner) {
 	const acc = await w3.eth.getAccounts();
 	session.account = acc[0];
@@ -34,11 +62,27 @@ async function startSession(w3, config, session, runner) {
 	runner(w3, session);
 }
 
+
+/**
+ * Reload session with current states.
+ *
+ * @param {Object} session
+ * @return {Object} session (refreshed)
+ */
 async function refreshSession(session) {
 	session.supply = await session.contract.methods.totalSupply().call({from: session.account});
 	return session;
 }
 
+
+/**
+ * Visits callback with token spec as argument for every allocated token.
+ *
+ * @param {Object} client
+ * @param {Object} session
+ * @param {Function} callback
+ * @throws free-form If token does not exist
+ */
 async function getTokens(w3, session, callback) {
 	let i = 0;
 	while (true) {
@@ -53,6 +97,15 @@ async function getTokens(w3, session, callback) {
 	}
 }
 
+
+/**
+ * Create a new token allocation. Refer to the smart contract function allocate() for further details.
+ *
+ * @param {Object} session
+ * @param {String} tokenId (hex)
+ * @param {Number} amount
+ * @throws free-form If transaction is refused by the client
+ */
 async function allocateToken(session, tokenId, amount) {
 	session.contract.methods.allocate('0x' + tokenId, amount).send({
 		from: session.account,
@@ -60,6 +113,16 @@ async function allocateToken(session, tokenId, amount) {
 	});
 }
 
+
+/**
+ * Mint a new token from an existing allocation. Refer to the smart contract function mintFromBatchTo() for further details.
+ *
+ * @param {Object} session
+ * @param {String} tokenId (hex)
+ * @param {Number} batch
+ * @param {String} recipient of token mint
+ * @throws free-form If transaction is refused by the client
+ */
 async function mintToken(session, tokenId, batch, recipient) {
 	const w3 = new Web3();
 	const address = await w3.utils.toChecksumAddress(recipient);
@@ -69,6 +132,16 @@ async function mintToken(session, tokenId, batch, recipient) {
 	});
 }
 
+
+/**
+ * Assemble and return data describing a single minted token.
+ *
+ * @param {Object} session
+ * @psram {String} tokenId (hex)
+ * @param {Number} batch
+ * @return {Object} 
+ * @throws free-form if token does not exist
+ */
 async function getMintedToken(session, tokenId, batch) {
 	let o = {
 		mintable: false,
@@ -101,22 +174,20 @@ async function getMintedToken(session, tokenId, batch) {
 	return o;
 }
 
-async function isMintAvailable(session, tokenId, batch) {
-	let token = await session.contract.methods.token('0x' + tokenId, batch).call({from: session.account});
-	if (token === undefined) {
-		return false;
-	}
-	if (batch == 0) {
-		if (token.count == 0) {
-			return token.cursor == 0;
-		}
-	}
-	if (token.cursor < token.count) {
-		return true;
-	}
-	return false;
-}
 
+/**
+ * Generate a Token Id from a resolved Token Key.
+ *
+ * In the case of a Unique Token, this will be the same string.
+ *
+ * In case of a Batched Token, this will replace the batch and index embedded in the key with the remainder of the Token Id hash.
+ *
+ * @param {Object} session
+ * @param {String} tokenId (hex)
+ * @param {String} tokenContent (hex)
+ * @throws free-form If token does not exist
+ * @todo Function is a bit long, could be shortened.
+ */
 async function toToken(session, tokenId, tokenContent) {
 	if (tokenId.substring(0, 2) == '0x') {
 		tokenId = tokenId.substring(2);
@@ -126,7 +197,6 @@ async function toToken(session, tokenId, tokenContent) {
 		tokenContent = tokenContent.substring(2);
 	}
 	
-	const v = parseInt(tokenContent.substring(0, 2), 16);
 	let data = {
 		tokenId: tokenId,
 		minted: false,
@@ -137,25 +207,28 @@ async function toToken(session, tokenId, tokenContent) {
 		sparse: false,
 	};
 
-	let k = tokenId;
 	let issue = undefined;
 
+	// check whether it is an active minted token, and whether it's unique of batched.
+	// if not active we stop processing here.
+	const v = parseInt(tokenContent.substring(0, 2), 16);
 	if ((v & 0x80) == 0) {
+		// execute this only if token is batched.
 		if ((v & 0x40) == 0) {
 			issue = {};
-			// TODO: the cap may be larger as we need to process for all batches, not matter whether theyre minted or not
-			//const token = await session.contract.methods.token('0x' + tokenId, 0).call({from: session.account});
 			const state = await getBatches(session, tokenId);
 			data.batches = state.batches;
 			issue.cap = state.cap;
 			issue.count = state.count;
 			data.issue = issue;
-			return data;	
 		}
-	}
+		return data;	
+	} 
 
 	data.minted = true;
 
+	// Fill in stats as applicable to whether Unique or Batched.
+	let k = tokenId;
 	issue = {}
 	if ((v & 0x40) == 0) {
 		k = tokenId.substring(0, 48) + tokenContent.substring(2, 18);
@@ -179,6 +252,14 @@ async function toToken(session, tokenId, tokenContent) {
 	return data;
 }
 
+
+/**
+ * Retrieve current state of data for minted token.
+ *
+ * @param {Object} session
+ * @param {String} tokenId
+ * @return {Object} token
+ */
 async function getTokenChainData(session, tokenId) {
 	const v = await session.contract.methods.mintedToken('0x' + tokenId).call({from: session.account});
 	
@@ -187,6 +268,15 @@ async function getTokenChainData(session, tokenId) {
 	return mintedToken;
 }
 
+
+/**
+ * Visit callback with token spec of every allocated token.
+ *
+ * @param {Object} session
+ * @param {String} tokenId (hex)
+ * @param {Function} callback
+ * @return {Object} summary of iteration.
+ */
 async function getBatches(session, tokenId, callback) {
 	let token = await session.contract.methods.token('0x' + tokenId, 0).call({from: session.account});
 	if (token.count == 0 && callback !== undefined) {
@@ -203,7 +293,7 @@ async function getBatches(session, tokenId, callback) {
 	let cap = parseInt(token.count);
 	while (true) {
 		try {
-			token = await session.contract.methods.token('0x' + tokenId, 1).call({from: session.account});
+			token = await session.contract.methods.token('0x' + tokenId, i).call({from: session.account});
 		} catch(e) {
 			break;
 		}
@@ -221,6 +311,16 @@ async function getBatches(session, tokenId, callback) {
 	};
 }
 
+
+/**
+ * Check if the given address is the owner of the smart contract.
+ *
+ * Only the owner may allocate and mint tokens.
+ *
+ * @param {Object} session
+ * @param {String} address (hex)
+ * @return {Boolean} true if owner
+ */
 async function isOwner(session, address) {
 	let owner = await session.contract.methods.owner().call({from: session.account});
 
@@ -231,6 +331,7 @@ async function isOwner(session, address) {
 	return address == owner;
 }
 
+
 module.exports = {
 	loadProvider: loadProvider,
 	loadConn: loadConn,
@@ -239,7 +340,6 @@ module.exports = {
 	getBatches: getBatches,
 	allocateToken: allocateToken,
 	mintToken: mintToken,
-	isMintAvailable: isMintAvailable,
 	isOwner: isOwner,
 	getTokenChainData: getTokenChainData,
 	getMintedToken: getMintedToken,
