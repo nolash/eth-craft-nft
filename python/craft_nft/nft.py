@@ -39,9 +39,10 @@ def to_batch_key(token_id, batch, index):
 
 class TokenSpec:
 
-    def __init__(self, count, cursor):
+    def __init__(self, count, cursor, sparse):
         self.count = count
         self.cursor = cursor
+        self.sparse = sparse
 
 
     def __str__(self):
@@ -269,10 +270,12 @@ class CraftNFT(ERC721):
         d = ABIContractDecoder()
         d.typ(ABIContractType.UINT48)
         d.typ(ABIContractType.UINT48)
+        d.typ(ABIContractType.BOOLEAN)
         d.val(v[:64])
         d.val(v[64:128])
+        d.val(v[128:192])
         r = d.decode()
-        return TokenSpec(r[0], r[1])
+        return TokenSpec(r[0], r[1], r[2])
 
     @classmethod
     def parse_token(self, v, token_id):

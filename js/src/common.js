@@ -72,5 +72,5 @@ window.addEventListener('tokenRequest', async(e) => {
  * Emitted when the user requests a token minting with the UI.
  */
 window.addEventListener('tokenMint', async(e) => {
-	window.craftnft.mintToken(session, e.detail.digest, e.detail.batch, e.detail.recipient);
+	window.craftnft.mintToken(session, e.detail.digest, e.detail.batch, e.detail.recipient, e.detail.index);
 });

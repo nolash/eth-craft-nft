@@ -1,1 +1,3 @@
-- Sometimes when clicking mint the metamask signer does not trigger. If mint is clicked a second time, it always appears. Detected with metamask 10.22.2 , chromium 108.0.5359.98
+- Sometimes when clicking mint the metamask signer does not trigger. If mint is clicked a second time, it usually appears. Detected with metamask 10.22.2 and 10.23.1, chromium 108.0.5359.98. A bug report has been filed here: https://github.com/MetaMask/metamask-extension/issues/17020
+
+- The example application does not detect events from Metamask, for example change of account or new mined transactions. This means that for each allocation and minting transaction, the browser must be reloaded (after the block has been mined) to reflect the state changes.

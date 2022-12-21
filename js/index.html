@@ -19,32 +19,35 @@ a {
 	text-decoration: underline;
 	color: #0000ff;
 }
-
 a:hover {
 	cursor: pointer;
+}
+label:after {
+	content: '\a';
+	white-space: pre;
 }
 </style>
 	</head>
 	<body>
-			<dl id=data">
-				<dt>account</dt>
-				<dd id="data_account"></dd>
-				<dt>contract</dt>
-				<dd>
-					<dl>
-						<dt>address</dt>
-						<dd id="data_contract"></dd>
-						<dt>name</dt>
-						<dd id="data_name"></dd>
-						<dt>symbol</dt>
-						<dd id="data_symbol"></dd>
-						<dt>supply</dt>
-						<dd id="data_supply"></dd>
-						<dt>contract declaration</dt>
-						<dd id="data_declaration"></dd>
-					</dl>
-				</dd>
-			</dl>
+		<dl id=data">
+			<dt>account</dt>
+			<dd id="data_account"></dd>
+			<dt>contract</dt>
+			<dd>
+				<dl>
+					<dt>address</dt>
+					<dd id="data_contract"></dd>
+					<dt>name</dt>
+					<dd id="data_name"></dd>
+					<dt>symbol</dt>
+					<dd id="data_symbol"></dd>
+					<dt>supply</dt>
+					<dd id="data_supply"></dd>
+					<dt>contract declaration</dt>
+					<dd id="data_declaration"></dd>
+				</dl>
+			</dd>
+		</dl>
 		<div id="interactive">
 			<form id="panel" action="#" onSubmit="return false;">
 				<input type="text" id="panel_title" name="title" />
@@ -53,7 +56,7 @@ a:hover {
 				<label for="panel_description">Description</label>
 				<input type="text" id="panel_amount" name="amount" />
 				<label for="panel_amount">Batch size (0 or empty for unique work)</label>
-				<button id="panel_submit">create</button>
+				<button id="panel_submit">allocate</button>
 			</form>
 		</div>
 		<div id="detail">
@@ -82,7 +85,13 @@ a:hover {
 				<dd id="token_mint_batch"></dd>
 			</dl>
 			<form>
+				<input type="hidden" id="token_mint_typ" value="unique" />
 				<input type="text" id="token_mint_recipient" />
+				<label for="token_mint_recipient">Recipient</label>
+				<span id="mint_index">
+				<input type="text" id="token_mint_index" />
+				<label for="token_mint_number">Number</label>
+				</span>
 				<button id="mint_submit">mint</button>
 			</form>
 		</div>

@@ -90,9 +90,18 @@ def render_token_batches(c, conn, token_address, token_id, w=sys.stdout):
             break
         spec = c.parse_token_spec(r)
 
-        for j in range(spec.cursor):
-            token_id_indexed = to_batch_key(token_id, i, j)
-            render_token_mint(c, conn, token_address, token_id_indexed, w=w)
+        if spec.sparse:
+            logg.info('sparse token issuance detected. Will iterate through {} tokens, may take a while'.format(spec.count))
+            for j in range(spec.count):
+                token_id_indexed = to_batch_key(token_id, i, j)
+                try:
+                    render_token_mint(c, conn, token_address, token_id_indexed, w=w)
+                except:
+                    pass
+        else:
+            for j in range(spec.cursor):
+                token_id_indexed = to_batch_key(token_id, i, j)
+                render_token_mint(c, conn, token_address, token_id_indexed, w=w)
 
         i += 1
 

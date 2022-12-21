@@ -111,14 +111,22 @@ async function generateAllocation() {
  */
 async function generateMint() {
 	const tokenId = document.getElementById('token_mint_id').innerHTML;
+
 	let batch = document.getElementById('token_mint_batch').innerHTML;
 	batch = parseInt(batch, 10);
 	const recipient = document.getElementById('token_mint_recipient').value;
+
+	let index = undefined;
+	if (document.getElementById('token_mint_typ').value === 'batched') {
+		index = parseInt(document.getElementById('token_mint_index').value, 10);
+	}
+
 	const tokenRequestEvent = new CustomEvent('tokenMint', {
 		detail: {
 			recipient: recipient,
 			digest: tokenId,
 			batch: batch,
+			index: index,
 		},
 		bubbles: true,
 		cancelable: true,
@@ -172,7 +180,6 @@ async function uiViewTokenSingle(tokenId) {
  * Render the allocated token view.
  */
 async function uiViewToken(tokenId) {
-	
 	let tokenData = {
 		name: '(unavailable)',
 		description: '(unavailable)',
@@ -200,7 +207,14 @@ async function uiViewToken(tokenId) {
 	document.getElementById('token_name').innerHTML = tokenData.name;
 	document.getElementById('token_description').innerHTML = tokenData.description;
 	document.getElementById('token_cap').innerHTML = tokenChainData.issue.cap;
-
+	if (tokenChainData.issue.cap == 0) {
+		document.getElementById('token_mint_typ').value = 'unique';
+		document.getElementById('token_mint_index').value = '';
+		document.getElementById('mint_index').style.visibility = 'hidden';
+	} else {
+		document.getElementById('token_mint_typ').value = 'batched';
+		document.getElementById('mint_index').style.visibility = 'inherit';
+	}
 
 	window.craftnft.getBatches(session, tokenId, (batch, count, cursor) => {
 		if (batch == -1) {

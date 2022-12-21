@@ -75,7 +75,7 @@ contract CraftNFT {
 	//
 	// If _final is true, future ownership transfers will not be permitted.
 	function transferOwnership(address _newOwner, bool _final) public returns(bool) {
-		require(msg.sender, owner);
+		require(msg.sender == owner);
 		require(!ownerFinal);
 		if (_final) {
 			ownerFinal = true;
