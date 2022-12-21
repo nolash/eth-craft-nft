@@ -59,7 +59,6 @@ async function generateAllocation() {
 		name: undefined,
 		description: undefined,
 		amount: 0,
-		parent_nft: undefined,
 	};
 
 	let amount = document.getElementById('panel_amount').value;
@@ -114,6 +113,7 @@ async function generateMint() {
 
 	let batch = document.getElementById('token_mint_batch').innerHTML;
 	batch = parseInt(batch, 10);
+
 	const recipient = document.getElementById('token_mint_recipient').value;
 
 	let index = undefined;
@@ -133,7 +133,7 @@ async function generateMint() {
 		composed: false,
 	});
 	window.dispatchEvent(tokenRequestEvent);
-	uiViewToken(tokenId);
+	//uiViewToken(tokenId);
 }
 
 
@@ -280,8 +280,14 @@ async function run(w3, generated_session) {
 	document.getElementById('data_name').innerHTML = session.name;
 	document.getElementById('data_symbol').innerHTML = session.symbol;
 	document.getElementById('data_supply').innerHTML = session.supply;
-	document.getElementById('panel_submit').addEventListener('click', generateAllocation);
-	document.getElementById('mint_submit').addEventListener('click', generateMint);
+	document.getElementById('panel_submit').addEventListener('click', () => {
+		generateAllocation();
+		return false;
+	});
+	document.getElementById('mint_submit').addEventListener('click', () => {
+		generateMint();
+		return false;
+	});
 
 	if (session.contentGateway !== undefined) {
 		declarationUrl = session.contentGateway.url(session.declarationHash);

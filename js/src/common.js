@@ -27,14 +27,11 @@ var session = {
 window.addEventListener('load', async () => {
 	const provider = window.craftnft.loadProvider();
 	const conn = window.craftnft.loadConn(provider);
-	// TODO: if provider state changes (e.g. metamask change account) we need to catch this and update the session.
-	// however, none of the suggestions tried so far worked (accountsChanged on provider, update on conn.provider publicconfigstore ...
-//	window.addEventListener('update', async (e) => {
-//		const oldAccount = session.account;
-//		const newAccount = await conn.eth.getAccounts();
-//		session.account = newAccount[0];
-//		console.log('account changed from ' + oldACcount + ' to ' + session.account);
-//	});
+
+	provider.on('accountsChanged', function(e) {
+		console.debug('accountschanged', e);
+	});
+
 
 	let config = undefined;
 	let rs = await fetch('settings.json');
@@ -55,6 +52,20 @@ window.addEventListener('load', async () => {
 	config.abi = abi
 	config.bin = bin
 
+	// This is handler code for the Allocate event
+	// Unfortunately, at least with openethereum 3.3.3, it does not post the log object, but the block header instead.
+	let ev = conn.eth.subscribe('logs', {
+		address: config.contract,
+		topics: ['0xb85ba54b9f6f8241b7e1499e3cfc186ac0b1c8b7100f599bf6ca6844f896c342'], 
+	}, (e, r) => {
+		console.debug('results of subscribe', e, r);
+	});
+
+	provider.on('message', (m) => {
+		console.debug('metamask log message for Allocate', m);
+	});
+
+
 	// run() is defined in the implementation file.
 	window.craftnft.startSession(conn, config, session, run);
 });
@@ -63,7 +74,7 @@ window.addEventListener('load', async () => {
 /**
  * Emitted when the user requests a token allocation with the UI.
  */
-window.addEventListener('tokenRequest', async(e) => {
+window.addEventListener('tokenRequest', (e) => {
 	window.craftnft.allocateToken(session, e.detail.digest, e.detail.tokenData.amount);
 });
 
@@ -71,6 +82,7 @@ window.addEventListener('tokenRequest', async(e) => {
 /**
  * Emitted when the user requests a token minting with the UI.
  */
-window.addEventListener('tokenMint', async(e) => {
+window.addEventListener('tokenMint', (e) => {
 	window.craftnft.mintToken(session, e.detail.digest, e.detail.batch, e.detail.recipient, e.detail.index);
 });
+

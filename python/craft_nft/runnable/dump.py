@@ -54,6 +54,13 @@ def process_config_local(config, arg, args, flags):
     config.add(contract, '_CONTRACT', False)
 
     config.add(100000, '_FEE_LIMIT', True)
+
+    token_id = None
+    if args.token_id != None:
+        token_id = strip_0x(args.token_id)
+        bytes.fromhex(token_id)
+    config.add(token_id, '_TOKEN_ID', False)
+
     return config
 
 
@@ -64,6 +71,7 @@ flags = arg_flags.STD_READ | arg_flags.EXEC | arg_flags.TAB
 
 argparser = chainlib.eth.cli.ArgumentParser()
 argparser = process_args(argparser, arg, flags)
+argparser.add_argument('--token-id', dest='token_id', type=str, help='List mints for this token id only')
 argparser.add_argument('contract_address', type=str, help='Token contract address (may also be specified by -e)')
 args = argparser.parse_args()
 
@@ -136,6 +144,11 @@ def main():
     outkeys = config.get('_OUTARG')
 
     i = 0
+
+    if config.get('_TOKEN_ID') != None:
+        render_token(c, conn, token_address, config.get('_TOKEN_ID'))
+        return
+
     while True:
         o = c.token_at(token_address, i)
         r = None

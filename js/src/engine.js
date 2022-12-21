@@ -126,20 +126,16 @@ async function allocateToken(session, tokenId, amount) {
 async function mintToken(session, tokenId, batch, recipient, index) {
 	const w3 = new Web3();
 	const address = await w3.utils.toChecksumAddress(recipient);
-	try {
-		if (index === undefined) {
-			await session.contract.methods.mintFromBatchTo(address, '0x' + tokenId, batch).send({
-				from: session.account,
-				value: 0,
-			});
-		} else {
-			await session.contract.methods.mintExactFromBatchTo(address, '0x' + tokenId, batch, index).send({
-				from: session.account,
-				value: 0,
-			});
-		}
-	} catch(e) {
-		console.error('error:', e);
+	if (index === undefined || isNaN(index)) {
+		session.contract.methods.mintFromBatchTo(address, '0x' + tokenId, batch).send({
+			from: session.account,
+			value: 0,
+		});
+	} else {
+		session.contract.methods.mintExactFromBatchTo(address, '0x' + tokenId, batch, index).send({
+			from: session.account,
+			value: 0,
+		});
 	}
 }
 

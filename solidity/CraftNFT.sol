@@ -62,7 +62,9 @@ contract CraftNFT {
 	event TransferWithData(address indexed _from, address indexed _to, uint256 indexed _tokenId, bytes32 _data);
 
 	// Minter
-	event Mint(address indexed _minter, address indexed _beneficiary, uint256 value);
+	event Mint(address indexed _minter, address indexed _beneficiary, uint256 _value);
+
+	event Allocate(address indexed _minter, uint48 indexed _count, bytes32 _tokenId);
 
 	constructor(string memory _name, string memory _symbol, bytes32 _declaration) {
 		owner = msg.sender;
@@ -132,6 +134,7 @@ contract CraftNFT {
 		} else {
 			supply += count;
 		}
+		emit Allocate(msg.sender, count, content);
 	}
 
 	// Find the token batch which contains the given index.
@@ -158,6 +161,7 @@ contract CraftNFT {
 		right = uint160(_recipient);
 		right |= (3 << 254);
 		mintedToken[_content] = bytes32(right);
+		emit Mint(msg.sender, _recipient, uint256(_content));
 
 		return _content;
 	}

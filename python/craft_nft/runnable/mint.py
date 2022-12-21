@@ -45,6 +45,7 @@ def process_config_local(config, arg, args, flags):
     config.add(token_id, '_TOKEN_ID', False)
 
     config.add(args.batch, '_TOKEN_BATCH', False)
+    config.add(args.index, '_TOKEN_INDEX', False)
 
     if args.fee_limit == None:
         config.add(200000, '_FEE_LIMIT', True)
@@ -58,6 +59,8 @@ def process_settings_local(settings, config):
     if config.get('_POSARG') != None:
         recipient = to_checksum_address(config.get('_POSARG'))
         settings.set('RECIPIENT', recipient)
+
+    settings.set('TOKEN_INDEX', config.get('_TOKEN_INDEX'))
 
     if (config.get('_TOKEN_BATCH') != None):
         settings.set('TOKEN_BATCH', config.get('_TOKEN_BATCH'))
@@ -93,7 +96,8 @@ argparser = chainlib.eth.cli.ArgumentParser()
 argparser = process_args(argparser, arg, flags)
 argparser.add_argument('--token-id', type=str, required=True, help='Token id to mint from')
 argparser.add_argument('--check', action='store_true', help='Only check whether a token can be minted')
-argparser.add_argument('--batch', type=int, help='Mint from the given batch. If not specified, the first mintable batch will be used')
+argparser.add_argument('--batch', type=int, default=0, help='Mint from the given batch. If not specified, the first mintable batch will be used')
+argparser.add_argument('--index', type=int, help='Index of token in batch to mint. If not specified, will mint next available index.')
 argparser.add_argument('token_recipient', type=str, nargs='*', help='Recipient address')
 args = argparser.parse_args(sys.argv[1:])
 
@@ -126,6 +130,7 @@ def main():
             settings.get('RECIPIENT'),
             settings.get('TOKEN_ID'),
             settings.get('TOKEN_BATCH'),
+            index=settings.get('TOKEN_INDEX'),
             )
 
     if config.get('_RPC_SEND'):

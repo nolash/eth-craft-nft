@@ -253,9 +253,6 @@ class CraftNFT(ERC721):
         return tx
 
 
-   # def to_index_id(self, token_id, batch, index):
-
-
     @classmethod
     def parse_batch_of(self, v):
         r = abi_decode_single(ABIContractType.UINT256, v)

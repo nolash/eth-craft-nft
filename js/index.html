@@ -52,11 +52,11 @@ label:after {
 			<form id="panel" action="#" onSubmit="return false;">
 				<input type="text" id="panel_title" name="title" />
 				<label for="panel_title">Title</label>
-				<input type="text" id="panel_description" name="description" />
+				<textarea id="panel_description" name="description"></textarea>
 				<label for="panel_description">Description</label>
 				<input type="text" id="panel_amount" name="amount" />
 				<label for="panel_amount">Batch size (0 or empty for unique work)</label>
-				<button id="panel_submit">allocate</button>
+				<button id="panel_submit" onClick='return false;'>allocate</button>
 			</form>
 		</div>
 		<div id="detail">
@@ -92,7 +92,7 @@ label:after {
 				<input type="text" id="token_mint_index" />
 				<label for="token_mint_number">Number</label>
 				</span>
-				<button id="mint_submit">mint</button>
+				<button id="mint_submit" onClick='return false;' >mint</button>
 			</form>
 		</div>
 		<h2>Tokens</h2>
