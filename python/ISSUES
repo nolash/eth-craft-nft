@@ -1,0 +1,1 @@
+- SIGINT is not registered by the dump command when iterating
