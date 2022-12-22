@@ -85,4 +85,3 @@ window.addEventListener('tokenRequest', (e) => {
 window.addEventListener('tokenMint', (e) => {
 	window.craftnft.mintToken(session, e.detail.digest, e.detail.batch, e.detail.recipient, e.detail.index);
 });
-

@@ -30,7 +30,12 @@ window.addEventListener('tokenBatch', async (e) => {
 	const li = document.createElement('li');
 	const span = document.createElement('span');
 	li.setAttribute('id', 'token_' + e.detail.tokenId + ' _batch_' + e.detail.batch);
-	span.innerHTML = 'minted ' + e.detail.cursor + ' of ' + e.detail.count + ' ';
+	if (parseInt(e.detail.cursor, 10) >= parseInt(e.detail.count, 10)) {
+		span.innerHTML = 'all minted (' + e.detail.cursor + ' of ' + e.detail.count + ')';
+	} else {
+		span.innerHTML = 'minted ' + e.detail.cursor + ' of ' + e.detail.count + ' ';
+
+	}
 	li.appendChild(span);
 
 	const mintedTokenData = await window.craftnft.getMintedToken(session, e.detail.tokenId, e.detail.batch);
@@ -133,7 +138,7 @@ async function generateMint() {
 		composed: false,
 	});
 	window.dispatchEvent(tokenRequestEvent);
-	//uiViewToken(tokenId);
+	uiViewToken(tokenId);
 }
 
 
@@ -144,9 +149,10 @@ async function uiMintToken(tokenId, batch) {
 	document.getElementById('token_mint_id').innerHTML = tokenId;
 	document.getElementById('token_mint_batch').innerHTML = batch;
 
-	document.getElementById('interactive').style.visibility = 'hidden';
-	document.getElementById('detail').style.visibility = 'hidden';
-	document.getElementById('mint').style.visibility = 'visible'
+	document.getElementById('interactive').style.display = 'none';
+	document.getElementById('detail').style.display = 'none';
+	document.getElementById('mint').style.display = 'block';
+
 }
 
 
@@ -234,9 +240,10 @@ async function uiViewToken(tokenId) {
 		});
 		window.dispatchEvent(e);
 	});
-	document.getElementById('interactive').style.visibility = 'hidden';
-	document.getElementById('detail').style.visibility = 'visible';
-	document.getElementById('mint').style.visibility = 'hidden';
+	document.getElementById('interactive').style.display = 'none';
+	document.getElementById('detail').style.display = 'block';
+	document.getElementById('mint').style.display = 'none';
+
 }
 
 
@@ -244,9 +251,10 @@ async function uiViewToken(tokenId) {
  * Render the create token allocation view.
  */
 async function uiCreateToken() {
-	document.getElementById('interactive').style.visibility = 'visible';
-	document.getElementById('detail').style.visibility = 'hidden';
-	document.getElementById('mint').style.visibility = 'hidden';
+	document.getElementById('interactive').style.display ='block';
+	document.getElementById('detail').style.display = 'none';
+	document.getElementById('mint').style.display = 'none';
+
 }
 
 
@@ -313,4 +321,34 @@ async function run(w3, generated_session) {
 		});
 		window.dispatchEvent(e);
 	});
+}
+
+
+async function renderFile(contents) {
+	//const sha_raw = new jsSHA("SHA-256", "BINARY", { encoding: "UTF8" });
+	console.log('hexking', contents);
+	const sha_raw = new jsSHA("SHA-256", "ARRAYBUFFER");
+	sha_raw.update(contents);
+	const digest = sha_raw.getHash("HEX");
+	console.debug('digest', digest);
+	let li = document.createElement('li');
+	li.innerHTML = 'sha256:' + digest;
+	document.getElementById('panel_images_list').appendChild(li);
+}
+
+async function uploadFile(v) {
+
+}
+
+async function fileChange(e) {
+	let fileButton = document.getElementById("panel_thumb")
+	let file = fileButton.files[0];
+	if (file) {
+		let f = new FileReader();
+		f.onloadend = async (r) => {
+			renderFile(r.target.result);
+			uploadFile(r.target.result);
+		};
+		f.readAsArrayBuffer(file);
+	}
 }

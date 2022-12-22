@@ -14,11 +14,16 @@ Version numbers in dependencies are not absolute, but only detail what has been 
 * `python >= 3.7.x`
 * `node >= 19.2.x (npm >= 8.19.x)`
 * An `evm` service endpoint that speaks web3 JSON-RPC. Some examples for development are:
-    - ganache (probably the simplest to set up)
-    - A private network with `geth`
-    - An official `evm` testnet (e.g. Rinkeby or Ropsten)
+    - [ganache](https://trufflesuite.com/ganache/) (probably the simplest to set up)
+    - A private network with [geth](https://github.com/ethereum/go-ethereum)
+    - An `evm` network using valueless tokens (e.g. [Görli](https://blog.infura.io/post/infura-supports-goerli-and-sepolia-as-ethereums-long-lived-testnets) or [Bloxberg](https://bloxberg.org))
 
 For `python` and `node` requirements, please consult the respective `*requirements.txt` and `package.json` files.
+
+The example browser application currently only works with Metamask as wallet. The dependencies used in development are:
+
+* `chromium 108.0.5359.98` 
+* `metamask (chromium extension) 10.23.1`
 
 To use the contract address storage service in the example browser application, you also need:
 
@@ -199,4 +204,3 @@ See the `$REPO_ROOT/doc/latex/terminology.latex` document for a terminology over
 For more details on the chainlib/chaintool contents, please refer to the [chaintool documentation repository](https://git.defalsify.org/chaintool-doc).
 
 All chaintool related code repositories are hosted on [https://git.defalsify.org](https://git.defalsify.org)
-
