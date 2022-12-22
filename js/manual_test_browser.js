@@ -64,6 +64,7 @@ async function generateAllocation() {
 		name: undefined,
 		description: undefined,
 		amount: 0,
+		attachments: [],
 	};
 
 	let amount = document.getElementById('panel_amount').value;
@@ -81,6 +82,11 @@ async function generateAllocation() {
 	const sha_raw = new jsSHA("SHA-256", "TEXT", { encoding: "UTF8" });
 	sha_raw.update(s);
 	const digest = sha_raw.getHash("HEX");
+
+	const attachments = document.getElementById('panel_attachment_list').children;
+	for (let i = 0; i < attachments.length; i++) {
+		tokenData.attachments.push(attachments[i].innerHTML);
+	}
 
 	if (session.contentGateway !== undefined) {
 		try {
@@ -324,21 +330,31 @@ async function run(w3, generated_session) {
 }
 
 
-async function renderFile(contents) {
+async function renderFile(contents, filename) {
 	//const sha_raw = new jsSHA("SHA-256", "BINARY", { encoding: "UTF8" });
-	console.log('hexking', contents);
 	const sha_raw = new jsSHA("SHA-256", "ARRAYBUFFER");
 	sha_raw.update(contents);
 	const digest = sha_raw.getHash("HEX");
-	console.debug('digest', digest);
 	let li = document.createElement('li');
 	li.innerHTML = 'sha256:' + digest;
-	document.getElementById('panel_images_list').appendChild(li);
+	document.getElementById('panel_attachment_list').appendChild(li);
+	return digest;
 }
 
-async function uploadFile(v) {
 
+async function uploadFile(contents, filename) {
+	if (session.contentGateway !== undefined) {
+		try {
+			let r = await session.contentGateway.put(contents, filename);
+			//if (r != digest) {
+			//	throw 'digest mismatch (' + r + ' != ' + digest + ')';
+			//}
+		} catch(e) {
+			console.error('failed to upload token attachment data:', e);
+		}
+	}
 }
+
 
 async function fileChange(e) {
 	let fileButton = document.getElementById("panel_thumb")
@@ -346,8 +362,8 @@ async function fileChange(e) {
 	if (file) {
 		let f = new FileReader();
 		f.onloadend = async (r) => {
-			renderFile(r.target.result);
-			uploadFile(r.target.result);
+			renderFile(r.target.result, file.name);
+			uploadFile(r.target.result, file.name);
 		};
 		f.readAsArrayBuffer(file);
 	}

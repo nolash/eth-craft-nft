@@ -9,28 +9,33 @@
 		<script src="src/common.js"></script>
 		<script src="src/wala.js"></script>
 <style type='text/css'>
+
 #detail {
 	display: none;
-	/*visibility: hidden;*/
 }
+
 #mint {
 	display: none;
-	/*visibility: hidden;*/
 }
+
 a {
 	text-decoration: underline;
 	color: #0000ff;
 }
+
 a:hover {
 	cursor: pointer;
 }
+
 label:after {
 	content: '\a';
 	white-space: pre;
 }
+
 dt {
 	font-weight: 900;
 }
+
 </style>
 	</head>
 	<body>
@@ -60,7 +65,7 @@ dt {
 				<label for="panel_amount">Batch size (0 or empty for unique work)</label>
 				<input type="file" id="panel_thumb" name="thumb" onChange='fileChange();'; />
 				<label for="panel_thumb">Add image</label>
-				<ol id="panel_images_list">
+				<ol id="panel_attachment_list">
 				</ol>
 				<button id="panel_submit" onClick='return false;'>allocate</button>
 			</form>

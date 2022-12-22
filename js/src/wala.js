@@ -2,9 +2,14 @@ function Wala(url) {
 	this._url = url;
 }
 
-Wala.prototype.put = async function(v) {
+Wala.prototype.put = async function(v, filename, mimetype) {
+	let headers = {};
+	if (filename !== undefined) {
+		headers['X-Filename'] = filename;
+	}
 	let r = await fetch(this._url, {
 		method: 'put',
+		headers: headers,
 		body: v,
 	});
 	if (!r.ok) {
