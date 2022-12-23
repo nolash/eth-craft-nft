@@ -297,7 +297,7 @@ contract CraftNFT {
 	}
 
 	// Common code path for transfer methods
-	function transferCore(address _from, address _to, uint256 _tokenId, bytes memory _data) internal {
+	function transferCore(address _from, address _to, uint256 _tokenId) internal {
 		address currentTokenOwner;
 
 		currentTokenOwner = this.ownerOf(_tokenId);
@@ -316,24 +316,20 @@ contract CraftNFT {
 
 	// ERC-721
 	function transferFrom(address _from, address _to, uint256 _tokenId) external payable {
-		bytes memory _data;
-
-		transferCore(_from, _to, _tokenId, _data);
+		transferCore(_from, _to, _tokenId);
 		emit Transfer(_from, _to, _tokenId);
 	}
 
 	// ERC-721
 	function safeTransferFrom(address _from, address _to, uint256 _tokenId, bytes memory _data) external payable {
-		transferCore(_from, _to, _tokenId, _data);
+		transferCore(_from, _to, _tokenId);
 		emit Transfer(_from, _to, _tokenId);
-		emit TransferWithData(_from, _to, _tokenId, bytes32(0x00)); //tokenData[_tokenId][tokenData[_tokenId].length-1]);
+		emit TransferWithData(_from, _to, _tokenId, bytes32(_data)); //tokenData[_tokenId][tokenData[_tokenId].length-1]);
 	}
 
 	// ERC-721
 	function safeTransferFrom(address _from, address _to, uint256 _tokenId) external payable {
-		bytes memory _data;
-
-		transferCore(_from, _to, _tokenId, _data);
+		transferCore(_from, _to, _tokenId);
 		emit Transfer(_from, _to, _tokenId);
 	}
 
