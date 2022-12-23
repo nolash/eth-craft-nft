@@ -7,6 +7,7 @@ js:
 
 python:
 	make -C python
+	cd python && ./prepare.sh
 
 solidity:
 	make -C solidity install

@@ -18,7 +18,7 @@ Version numbers in dependencies are not absolute, but only detail what has been 
     - A private network with [geth](https://github.com/ethereum/go-ethereum)
     - An `evm` network using valueless tokens (e.g. [Görli](https://blog.infura.io/post/infura-supports-goerli-and-sepolia-as-ethereums-long-lived-testnets) or [Bloxberg](https://bloxberg.org))
 
-For `python` and `node` requirements, please consult the respective `*requirements.txt` and `package.json` files.
+For `python` and `node` requirements, please consult the respective `*requirements.txt` and `package.json` files. Usage of `virtualenv` for python and `nvm` for nodejs is recommended.
 
 The example browser application currently only works with Metamask as wallet. The dependencies used in development are:
 
