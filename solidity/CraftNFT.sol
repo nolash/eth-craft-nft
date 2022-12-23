@@ -1,5 +1,6 @@
 pragma solidity >= 0.8.0;
 
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 contract CraftNFT {
 	// Defines the behavior of a single token batch.
@@ -52,6 +53,9 @@ contract CraftNFT {
 	// The digest of a human-readable resource that describes the rationale and terms for all tokens created by this contract.
 	bytes32 public declaration;
 
+	// Balance
+	mapping ( address => uint256 ) balance;
+
 	// ERC-721
 	event Transfer(address indexed _from, address indexed _to, uint256 indexed _tokenId);
 	// ERC-721
@@ -83,15 +87,16 @@ contract CraftNFT {
 			ownerFinal = true;
 		}
 		owner = _newOwner;
+		return true;
 	}
 
 	// Check bit that is always set on the content data when a token has been minted.
-	function isActive(bytes32 _tokenContent) private view returns(bool) {
+	function isActive(bytes32 _tokenContent) private pure returns(bool) {
 		return uint256(_tokenContent) & 0x8000000000000000000000000000000000000000000000000000000000000000 > 0;
 	}
 
 	// Returns true if the content data belongs to a Unique Token
-	function isSingle(bytes32 _tokenContent) private view returns(bool) {
+	function isSingle(bytes32 _tokenContent) private pure returns(bool) {
 		return uint256(_tokenContent) & 0x4000000000000000000000000000000000000000000000000000000000000000 > 0;
 	}
 
@@ -135,6 +140,7 @@ contract CraftNFT {
 			supply += count;
 		}
 		emit Allocate(msg.sender, count, content);
+		return true;
 	}
 
 	// Find the token batch which contains the given index.
@@ -151,7 +157,6 @@ contract CraftNFT {
 	// Mint a unique token. The method will fail if the token was allocated as a batch.
 	function mintTo(address _recipient, bytes32 _content) public returns (bytes32) {
 		uint256 right;
-		uint256 first;
 		
 		require(msg.sender == owner);
 		require(token[_content].length == 1);
@@ -161,6 +166,9 @@ contract CraftNFT {
 		right = uint160(_recipient);
 		right |= (3 << 254);
 		mintedToken[_content] = bytes32(right);
+
+		balance[_recipient] += 1;
+
 		emit Mint(msg.sender, _recipient, uint256(_content));
 
 		return _content;
@@ -245,6 +253,9 @@ contract CraftNFT {
 
 		_spec.cursor += 1;
 		mintedToken[k] = bytes32(right);
+
+		balance[_recipient] += 1;
+
 		emit Mint(msg.sender, _recipient, left);
 
 		return k;
@@ -252,7 +263,7 @@ contract CraftNFT {
 	
 	// ERC-721
 	function balanceOf(address _owner) external view returns (uint256) {
-		return 0;
+		return balance[_owner];
 	}	
 
 	// ERC-721
@@ -298,6 +309,9 @@ contract CraftNFT {
 		
 		tokenAllowance[_tokenId] = address(0);
 		setTokenOwner(_tokenId, _to);
+
+		balance[_from] -= 1;
+		balance[_to] += 1;
 	}
 
 	// ERC-721

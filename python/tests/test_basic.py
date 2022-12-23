@@ -33,6 +33,7 @@ from chainlib.eth.contract import ABIContractEncoder
 from craft_nft import CraftNFT
 from craft_nft.error import InvalidBatchError
 from craft_nft.eth import ABIContractType
+from craft_nft.nft import to_batch_key
 
 logging.basicConfig(level=logging.DEBUG)
 logg = logging.getLogger()
@@ -494,6 +495,71 @@ class Test(EthTesterCase):
         o = c.get_digest(self.address, hash_of_bar, sender_address=self.accounts[0])
         r = self.rpc.do(o)
         self.assertEqual(strip_0x(r), hash_of_bar)
+
+
+    def test_balance(self):
+        nonce_oracle = RPCNonceOracle(self.accounts[0], self.rpc)
+        c = CraftNFT(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
+
+        (tx_hash_hex, o) = c.allocate(self.address, self.accounts[0], hash_of_foo, amount=3)
+        self.rpc.do(o)
+
+        (tx_hash_hex, o) = c.allocate(self.address, self.accounts[0], hash_of_bar, amount=0)
+        self.rpc.do(o)
+
+        o = c.balance(self.address, self.accounts[1], sender_address=self.accounts[0])
+        r = self.rpc.do(o)
+        balance = c.parse_balance(r)
+        self.assertEqual(balance, 0)
+
+        (tx_hash_hex, o) = c.mint_to(self.address, self.accounts[0], self.accounts[1], hash_of_foo, 0)
+        self.rpc.do(o)
+
+        (tx_hash_hex, o) = c.mint_to(self.address, self.accounts[0], self.accounts[1], hash_of_foo, 0)
+        self.rpc.do(o)
+
+        (tx_hash_hex, o) = c.mint_to(self.address, self.accounts[0], self.accounts[1], hash_of_bar, 0)
+        self.rpc.do(o)
+
+        o = c.balance(self.address, self.accounts[1], sender_address=self.accounts[0])
+        r = self.rpc.do(o)
+        balance = c.parse_balance(r)
+        self.assertEqual(balance, 3)
+
+        nonce_oracle = RPCNonceOracle(self.accounts[1], self.rpc)
+        c = CraftNFT(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
+        expected_id = to_batch_key(hash_of_foo, 0, 1)
+        (tx_hash_hex, o) = c.transfer_from(self.address, self.accounts[1], self.accounts[1], self.accounts[2], int(expected_id, 16))
+        self.rpc.do(o)
+        o = receipt(tx_hash_hex)
+        r = self.conn.do(o)
+        self.assertEqual(r['status'], 1)
+
+        o = c.balance(self.address, self.accounts[1], sender_address=self.accounts[0])
+        r = self.rpc.do(o)
+        balance = c.parse_balance(r)
+        self.assertEqual(balance, 2)
+
+        o = c.balance(self.address, self.accounts[2], sender_address=self.accounts[0])
+        r = self.rpc.do(o)
+        balance = c.parse_balance(r)
+        self.assertEqual(balance, 1)
+
+        (tx_hash_hex, o) = c.transfer_from(self.address, self.accounts[1], self.accounts[1], self.accounts[3], int(hash_of_bar, 16))
+        self.rpc.do(o)
+        o = receipt(tx_hash_hex)
+        r = self.conn.do(o)
+        self.assertEqual(r['status'], 1)
+
+        o = c.balance(self.address, self.accounts[1], sender_address=self.accounts[0])
+        r = self.rpc.do(o)
+        balance = c.parse_balance(r)
+        self.assertEqual(balance, 1)
+
+        o = c.balance(self.address, self.accounts[3], sender_address=self.accounts[0])
+        r = self.rpc.do(o)
+        balance = c.parse_balance(r)
+        self.assertEqual(balance, 1)
 
 
 if __name__ == '__main__':

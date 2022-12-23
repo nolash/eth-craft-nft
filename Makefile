@@ -1,6 +1,6 @@
-all: solidity js python
+all: solidity js python aux
 
-.PHONY: js python solidity
+.PHONY: js python solidity wala
 
 js:
 	make -C js
@@ -11,6 +11,12 @@ python:
 
 solidity:
 	make -C solidity install
-	
+
+wala:
+	git clone git://defalsify.org/wala.git
+	cd wala && cargo build --all-features
+
+aux: wala
+
 test:
 	make -C python test
