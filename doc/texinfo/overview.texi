@@ -1,0 +1,21 @@
+@chapter Overview
+
+The CraftNFT code is designed to provide a sovereign and standalone registry for certificates of real-world arts and crafts assets.
+
+Tokens may be issued for unique works, aswell as works that span multiple units or copies. The latter, termed as ``batched'' tokens, may be issued in sequential or arbitrary order.
+
+
+@section Unique token
+
+A unique token represents a unique piece of work. Most unique works are hand-crafted, or at least represent some result of work that is bound to a combination of either of individual(s), time and place.
+
+A unique work never usually retains its value when copied.
+
+
+@section Batched token
+
+A batched token represents a work that is designed to be copied. Examples include limited edition prints, perhaps numbered, and signed digital assets.
+
+Every issuance of new batched tokens is clearly identitiable by the batch number it inherits. This is analogous to serial edition numbers used in book publishing.
+
+Thus, it is not possible to inflate the supply of an existing token issuance. Or, in other words, if 10 tokens are issued first, and 20 issued later, the 20 latter tokens will be irreversibly marked as ``second edition''.

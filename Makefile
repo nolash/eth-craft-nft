@@ -20,3 +20,6 @@ aux: wala
 
 test:
 	make -C python test
+
+doc:
+	makeinfo -o html_docs --html doc/texinfo/index.texi

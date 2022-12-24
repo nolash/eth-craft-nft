@@ -1,0 +1,43 @@
+@chapter Terminology
+
+@table @samp
+@item Content Address
+A data string representing a deterministic fingerprint of data.
+
+@item Token Contract
+A smart contract that enables creation of multiple NFT tokens.
+
+@item Contract Declaration
+A Content Address of a human-readable resource that describes all tokens created in a single Token Contract.
+
+@item Token Batch
+A collection of units that were issued at a particular moment in time to represent a unique work, for example limited edition printed copies. A token may have multiple batches, for example to represents reprints.
+
+@item Token Id
+The unique identifier for a work. In the context of Token Batches, the Token Id points to the work that the units in the batches represent, for example the original print medium resource. The Token Id is the Content Address of the file
+
+@item Token Declaration
+A Content Address of a machine-readable resource that describes a single Token Id
+
+@item Minted Token
+A token that has been minted.
+
+@item Token Owner
+A public/private key pair holder that owns a Minted Token.
+
+@item Token Key
+The identifier for a single minted token. The token may be unique or may be part of a Token Batch. In case of the latter, the Token Key contains the batch number and the minted token's index within that batch.
+
+@item Batch Token
+A minted token which is part of a batch.
+
+@item Unique Token
+A single Minted Token which 
+
+@item Token Allocation
+Defines the nature and behavior of a token. A Token Allocation is done once for a Unique Token, or per-batch for a Batch Token.
+
+@item Token Spec
+Data structure describing the current state of token minting.
+
+@end table

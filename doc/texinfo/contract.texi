@@ -1,0 +1,47 @@
+@chapter Smart contract
+
+There are primarily two distinct representations, one for the unique token and one for the batch. Both are expressed within the same data structure.
+
+All serialized representations of numbers mentioned in the below are expressed in big-endian format.
+
+
+@section Relational structure
+
+At the highest level, a token is unambiguously identified by the sha256 hash of the json structure that describes it.
+
+This is true regardless whether the token is a Unique Token or a Batched Token.
+
+
+@subsection Token array
+
+The tokens array contains every distinct token ever added to the contract.
+
+The content of each entry is the sha256 content address of the token specification.
+
+
+@subsection Token Allocation mapping
+
+The token mapping defines the parameters for individual tokens allocations.
+
+For a Unique Token there will only ever be one Token Allocation.
+
+Every entry in the array defines how many tokens were issued for the batch, and a current count of how many individual tokens have been minted from that batch.
+
+For a Token Batch, it also keeps track of whether or not sparse token minting has occurred. See below for more details on sparse minting.
+
+
+@subsubsection Minted Token mapping
+
+The mintedToken mapping defines the state of a minted token, e.g. the ownership and its position in the token issuance hierarchy. A minted token can be either unique or one of a batch.
+
+For unique tokens, the key of this mapping will always be the same as the sha256 content address of the token specification.
+
+For a batched token, the key will be the first 48 bytes of the content address, then 2 bytes describing the batch of the token, and 6 bytes describing its index within the batch.
+
+The value of this mapping contains the remainder of the hash that has been supplanted by the batch and index in the key (bytes 2 through 10), as well as the owner address (bytes 12 through 32.
+
+The first byte of the value is reserved for control bits.
+
+The first bit, if set, disambiguates an actually set value from an empty value.
+
+The second bit, if set, indicates a unique token.

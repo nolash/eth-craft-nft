@@ -1,0 +1,20 @@
+@chapter Tooling
+
+The smart contract tests are implemented using a convenience library based on the chainlib-eth python module.
+
+It also provides two CLI tools:
+
+@itemize @var
+@item craftnft-publish
+Create a new token.
+@item craftnft-dump
+List all minted tokens and their ownership status.
+@item craftnft-allocate
+Allocate a new set of tokens for a particular token definition.
+@item craftnft-mint
+Mint a new token from an existing allocation.
+@end itemize
+
+The tooling is itself provided as a python module. It can be installed from pypi.org under the name craft\_nft, e.g. pip install craft\_nft. If your executables path are correctly set, the tools will be directly executable in the shell.
+
+

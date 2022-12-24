@@ -1,0 +1,7 @@
+@node craft-nft
+@top Craft NFT
+
+@include overview.texi
+@include terminology.texi
+@include contract.texi
+@include tools.texi
