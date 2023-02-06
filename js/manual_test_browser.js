@@ -218,6 +218,10 @@ async function uiViewToken(tokenId) {
 		}
 	}
 
+	const image_display = document.getElementById('token_image');
+	if (image_display.lastChild !== null) {
+		image_display.removeChild(image_display.lastChild);
+	}
 	const batch_shit = document.getElementById('token_batches');
 	while (batch_shit.lastChild) {
 		batch_shit.removeChild(batch_shit.lastChild);
