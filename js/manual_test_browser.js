@@ -1,10 +1,17 @@
 // This file contains a rought-edged example implementation of a user interface for reading and writing Craft NFT tokens.
 
+let tokenListCache = [];
 
 /**
  * Emitted when a new token has been found.
  */
 window.addEventListener('token', (e) => {
+	for (let i = tokenListCache.length - 1; i > -1; i--) {
+		if (tokenListCache[i] == e.detail.tokenId) {
+			return;
+		}
+	}
+	tokenListCache.push(e.detail.tokenId);
 	const li = document.createElement('li');
 	const a = document.createElement('a');
 	a.setAttribute('onClick', 'uiViewToken("' + e.detail.tokenId + '")');
