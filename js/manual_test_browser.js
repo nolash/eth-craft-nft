@@ -60,9 +60,15 @@ window.addEventListener('tokenBatch', async (e) => {
  * Interpreted parameters are emitted with the tokenRequest event.
  */
 async function generateAllocation() {
-	let tokenData = {
+	let tokenData_ERC721 = {
 		name: undefined,
 		description: undefined,
+		image: undefined,
+	};
+	let tokenData_openSea = {
+		attributes: [],
+	};
+	let tokenData_native = {
 		amount: 0,
 		attachments: [],
 	};
@@ -71,22 +77,27 @@ async function generateAllocation() {
 	if (amount === '') {
 		amount = '0';
 	}
-	tokenData.amount = parseInt(amount, 10);
-	if (isNaN(tokenData.amount)) {
+	tokenData_native.amount = parseInt(amount, 10);
+	if (isNaN(tokenData_native.amount)) {
 		throw 'amount must be numeric';
 	}
-	tokenData.name = document.getElementById('panel_title').value;
-	tokenData.description = document.getElementById('panel_description').value;
-	const s = JSON.stringify(tokenData);
+	tokenData_ERC721.name = document.getElementById('panel_title').value;
+	tokenData_ERC721.description = document.getElementById('panel_description').value;
+
+	const attachments = document.getElementById('panel_attachment_list').children;
+	for (let i = 0; i < attachments.length; i++) {
+		if (tokenData_ERC721.image === undefined) {
+			tokenData_ERC721.image = attachments[i].innerHTML;
+		}
+		tokenData_native.attachments.push(attachments[i].innerHTML);
+	}
+
+	tokenData = Object.assign(tokenData_ERC721, tokenData_native, tokenData_openSea);
+	const s = JSON.stringify(tokenData_ERC721);
 
 	const sha_raw = new jsSHA("SHA-256", "TEXT", { encoding: "UTF8" });
 	sha_raw.update(s);
 	const digest = sha_raw.getHash("HEX");
-
-	const attachments = document.getElementById('panel_attachment_list').children;
-	for (let i = 0; i < attachments.length; i++) {
-		tokenData.attachments.push(attachments[i].innerHTML);
-	}
 
 	if (session.contentGateway !== undefined) {
 		try {
@@ -215,6 +226,16 @@ async function uiViewToken(tokenId) {
 	const tokenChainData = await window.craftnft.getTokenChainData(session, tokenId);
 	console.debug('retrieved token chain data', tokenChainData);
 
+	console.debug('getting image hash', tokenData.image);
+	if (tokenData.image !== undefined) {
+		image_hash = tokenData.image.substring(7);
+		session.contentGateway.get(image_hash, true).then((v) => {
+			let img = document.createElement('img');
+			console.debug('img img', img);
+			img.src = URL.createObjectURL(v);
+			document.getElementById('token_image').appendChild(img);
+		});
+	}
 	document.getElementById('token_id').innerHTML = tokenId;
 	document.getElementById('token_name').innerHTML = tokenData.name;
 	document.getElementById('token_description').innerHTML = tokenData.description;

@@ -18,11 +18,14 @@ Wala.prototype.put = async function(v, filename, mimetype) {
 	return r.text();
 }
 
-Wala.prototype.get = async function(k) {
+Wala.prototype.get = async function(k, binary=false) {
 	const url = this.url(k)
 	let r = await fetch(url);
 	if (!r.ok) {
 		throw ('failed get');
+	}
+	if (binary) {
+		return r.blob();
 	}
 	return r.text();
 }
