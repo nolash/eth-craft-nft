@@ -39,6 +39,8 @@ logg = logging.getLogger()
 
 
 def process_config_local(config, arg, args, flags):
+    if config.get('_EXEC_ADDRESS') == None:
+        raise ValueError('exec address required')
     token_id = strip_0x(config.get('_POSARG'))
     bytes.fromhex(token_id)
     config.add(token_id, '_TOKEN_ID', False)

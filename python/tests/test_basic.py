@@ -59,6 +59,7 @@ class Test(EthTesterCase):
         r = self.conn.do(o)
         self.address = to_checksum_address(r['contract_address'])
 
+
     def test_allocate(self):
         nonce_oracle = RPCNonceOracle(self.accounts[0], self.rpc)
         c = CraftNFT(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)

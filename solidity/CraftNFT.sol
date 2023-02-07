@@ -53,6 +53,9 @@ contract CraftNFT {
 	// The digest of a human-readable resource that describes the rationale and terms for all tokens created by this contract.
 	bytes32 public declaration;
 
+	// Editable base URI against which to look up token data by token id
+	bytes public baseURL;
+
 	// Balance
 	mapping ( address => uint256 ) balance;
 
@@ -333,11 +336,33 @@ contract CraftNFT {
 		emit Transfer(_from, _to, _tokenId);
 	}
 
+	// Allow mutable explicit url base
+	function setBaseURL(string memory _baseString) public {
+		bytes memory _base;
+		uint256 l;
+		require(msg.sender == owner);
+		
+		_base = bytes(_baseString);
+		l = _base.length;
+		if (_base[l-1] != 0x2f) {
+			l++;
+		}
+		baseURL = new bytes(l);
+		for (uint256 i = 0; i < _base.length; i++) {
+			baseURL[i] = _base[i];
+		}
+		if (l != _base.length) {
+			baseURL[_base.length] = "/";
+		}
+	}
+
 	// create sha256 scheme URI from tokenId
 	function toURI(bytes32 _data) public pure returns(string memory) {
 		bytes memory out;
-		uint8 t;
+		bytes memory _hexDigest;
 		uint256 c;
+
+		_hexDigest = hexDigest(_data);
 
 		out = new bytes(64 + 7);
 		out[0] = "s";
@@ -348,7 +373,42 @@ contract CraftNFT {
 		out[5] = "6";
 		out[6] = ":";
 		
-		c = 7;	
+		c = 7;
+		for (uint256 i = 0; i < 64; i++) {
+			out[c] = _hexDigest[i];
+			c++;
+		}
+
+		return string(out);
+	}
+
+	function toURL(bytes32 _data) public view returns(string memory) {
+		bytes memory out;
+		bytes memory _hexDigest;
+		uint256 c;
+
+		_hexDigest = hexDigest(_data);
+	
+		c = baseURL.length;
+		out = new bytes(_hexDigest.length + c);
+
+		for (uint256 i = 0; i < c; i++) {
+			out[i] = baseURL[i];
+		}
+		for (uint256 i = 0; i < _hexDigest.length; i++) {
+			out[c] = _hexDigest[i];
+			c++;
+		}
+		return string(out);
+	}
+
+	function hexDigest(bytes32 _data) private pure returns(bytes memory) {
+		bytes memory out;
+		uint8 t;
+		uint256 c;
+
+		out = new bytes(64);
+		c = 0;
 		for (uint256 i = 0; i < 32; i++) {
 			t = (uint8(_data[i]) & 0xf0) >> 4;
 			if (t < 10) {
@@ -364,18 +424,13 @@ contract CraftNFT {
 			}
 			c += 2;
 		}
-		return string(out);
+		return out;
 	}
 
 	// ERC-721 (Metadata - optional)
 	function tokenURI(uint256 _tokenId) public view returns (string memory) {
-		bytes32 digest;
-
-		digest = this.getDigest(bytes32(_tokenId));
-
-		return toURI(digest);
+		return toURL(bytes32(_tokenId));
 	}
-
 
 	// EIP-165
 	function supportsInterface(bytes4 interfaceID) external pure returns (bool) {

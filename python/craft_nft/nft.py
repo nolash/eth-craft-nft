@@ -223,6 +223,69 @@ class CraftNFT(ERC721):
         return o
 
 
+    def set_base_url(self, contract_address, sender_address, url, amount=0, tx_format=TxFormat.JSONRPC):
+        enc = ABIContractEncoder()
+        enc.method('setBaseURL')
+        enc.typ(ABIContractType.STRING)
+        enc.string(url)
+        data = enc.get()
+        tx = self.template(sender_address, contract_address, use_nonce=True)
+        tx = self.set_code(tx, data)
+        tx = self.finalize(tx, tx_format)
+        return tx
+
+
+    def to_uri(self, contract_address, token_id, sender_address=ZERO_ADDRESS, id_generator=None):
+        j = JSONRPCRequest(id_generator)
+        o = j.template()
+        o['method'] = 'eth_call'
+        enc = ABIContractEncoder()
+        enc.method('toURI')
+        enc.typ(ABIContractType.BYTES32)
+        enc.bytes32(token_id)
+        data = add_0x(enc.get())
+        tx = self.template(sender_address, contract_address)
+        tx = self.set_code(tx, data)
+        o['params'].append(self.normalize(tx))
+        o['params'].append('latest')
+        o = j.finalize(o)
+        return o
+
+
+    def to_url(self, contract_address, token_id, sender_address=ZERO_ADDRESS, id_generator=None):
+        j = JSONRPCRequest(id_generator)
+        o = j.template()
+        o['method'] = 'eth_call'
+        enc = ABIContractEncoder()
+        enc.method('toURL')
+        enc.typ(ABIContractType.BYTES32)
+        enc.bytes32(token_id)
+        data = add_0x(enc.get())
+        tx = self.template(sender_address, contract_address)
+        tx = self.set_code(tx, data)
+        o['params'].append(self.normalize(tx))
+        o['params'].append('latest')
+        o = j.finalize(o)
+        return o
+
+
+    def token_uri(self, contract_address, token_num_id, sender_address=ZERO_ADDRESS, id_generator=None):
+        j = JSONRPCRequest(id_generator)
+        o = j.template()
+        o['method'] = 'eth_call'
+        enc = ABIContractEncoder()
+        enc.method('tokenURI')
+        enc.typ(ABIContractType.UINT256)
+        enc.uint256(token_num_id)
+        data = add_0x(enc.get())
+        tx = self.template(sender_address, contract_address)
+        tx = self.set_code(tx, data)
+        o['params'].append(self.normalize(tx))
+        o['params'].append('latest')
+        o = j.finalize(o)
+        return o
+
+
     def mint_to(self, contract_address, sender_address, recipient, token_id, batch, index=None, tx_format=TxFormat.JSONRPC):
         enc = ABIContractEncoder()
 
@@ -291,3 +354,8 @@ class CraftNFT(ERC721):
         o.index = int(token_id[52:64], 16)
         o.token_id = token_id[:48] + v[2:18]
         return o
+
+
+    def parse_uri(self, v):
+        r = abi_decode_single(ABIContractType.STRING, v)
+        return r
