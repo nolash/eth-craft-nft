@@ -440,9 +440,9 @@ contract CraftNFT {
 		if (interfaceID == 0x5b5e139f) { // EIP 721 (Metadata - optional)
 			return true;
 		}
-		if (interfaceID == 0x780e9d63) { // EIP 721 (Enumerable - optional)
-			return true;
-		}
+		//if (interfaceID == 0x780e9d63) { // EIP 721 (Enumerable - optional)
+		//	return true;
+		//}
 		if (interfaceID == 0x449a52f8) { // Minter
 			return true;
 		}
