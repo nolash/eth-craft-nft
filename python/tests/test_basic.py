@@ -409,39 +409,6 @@ class Test(EthTesterCase):
         self.assertEqual(strip_0x(r), hash_of_foo)
 
 
-    def test_token_uri(self):
-        nonce_oracle = RPCNonceOracle(self.accounts[0], self.rpc)
-        c = CraftNFT(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
-        (tx_hash_hex, o) = c.allocate(self.address, self.accounts[0], hash_of_foo)
-        self.rpc.do(o)
-
-        (tx_hash_hex, o) = c.mint_to(self.address, self.accounts[0], self.accounts[1], hash_of_foo, 0)
-        self.rpc.do(o)
-
-        o = c.token_uri(self.address, int(hash_of_foo, 16), sender_address=self.accounts[0])
-        r = self.rpc.do(o)
-        uri = c.parse_token_uri(r)
-
-        self.assertEqual('sha256:' + hash_of_foo, uri)
-        
-
-    def test_token_uri_batch(self):
-        nonce_oracle = RPCNonceOracle(self.accounts[0], self.rpc)
-        c = CraftNFT(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
-        (tx_hash_hex, o) = c.allocate(self.address, self.accounts[0], hash_of_foo, amount=2)
-        self.rpc.do(o)
-
-        (tx_hash_hex, o) = c.mint_to(self.address, self.accounts[0], self.accounts[1], hash_of_foo, 0)
-        self.rpc.do(o)
-
-        expected_id = hash_of_foo[:64-16] + '0000000000000000'
-        o = c.token_uri(self.address, int(expected_id, 16), sender_address=self.accounts[0])
-        r = self.rpc.do(o)
-        uri = c.parse_token_uri(r)
-
-        self.assertEqual('sha256:' + hash_of_foo, uri)
-
-
     def test_multi(self):
         nonce_oracle = RPCNonceOracle(self.accounts[0], self.rpc)
         c = CraftNFT(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)

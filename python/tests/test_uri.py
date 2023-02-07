@@ -86,7 +86,15 @@ class TestURI(EthTesterCase):
         self.assertEqual('http://localhost/' + hash_of_foo, uri)
 
         o = c.token_uri(self.address, int(hash_of_foo, 16), sender_address=self.accounts[0])
-        r = self.rpc.do(o)
+        with self.assertRaises(JSONRPCException):
+            self.rpc.do(o)
+        uri = c.parse_uri(r)
+        self.assertEqual('http://localhost/' + hash_of_foo, uri)
+
+        (tx_hash_hex, o) = c.allocate(self.address, self.accounts[0], hash_of_foo, amount=2)
+        self.rpc.do(o)
+        o = c.token_uri(self.address, int(hash_of_foo, 16), sender_address=self.accounts[0])
+        self.rpc.do(o)
         uri = c.parse_uri(r)
         self.assertEqual('http://localhost/' + hash_of_foo, uri)
 

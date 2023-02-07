@@ -362,7 +362,7 @@ contract CraftNFT {
 		bytes memory _hexDigest;
 		uint256 c;
 
-		_hexDigest = hexDigest(_data);
+		_hexDigest = getDigestHex(_data);
 
 		out = new bytes(64 + 7);
 		out[0] = "s";
@@ -387,7 +387,7 @@ contract CraftNFT {
 		bytes memory _hexDigest;
 		uint256 c;
 
-		_hexDigest = hexDigest(_data);
+		_hexDigest = getDigestHex(_data);
 	
 		c = baseURL.length;
 		out = new bytes(_hexDigest.length + c);
@@ -402,7 +402,7 @@ contract CraftNFT {
 		return string(out);
 	}
 
-	function hexDigest(bytes32 _data) private pure returns(bytes memory) {
+	function getDigestHex(bytes32 _data) public pure returns(bytes memory) {
 		bytes memory out;
 		uint8 t;
 		uint256 c;
@@ -429,6 +429,11 @@ contract CraftNFT {
 
 	// ERC-721 (Metadata - optional)
 	function tokenURI(uint256 _tokenId) public view returns (string memory) {
+		bytes32 _tokenIdBytes;
+		
+		_tokenIdBytes = bytes32(_tokenId);
+
+		require(token[_tokenIdBytes].length > 0);
 		return toURL(bytes32(_tokenId));
 	}
 
