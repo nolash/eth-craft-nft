@@ -110,5 +110,28 @@ class TestURI(EthTesterCase):
         self.assertEqual('https://example.org/' + hash_of_bar, uri)
 
 
+    def test_batch_to_uri(self):
+        nonce_oracle = RPCNonceOracle(self.accounts[0], self.rpc)
+        c = CraftNFT(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
+
+        (tx_hash_hex, o) = c.allocate(self.address, self.accounts[0], hash_of_foo, amount=1000)
+        self.rpc.do(o)
+        o = receipt(tx_hash_hex)
+        r = self.conn.do(o)
+        self.assertEqual(r['status'], 1)
+
+        (tx_hash_hex, o) = c.mint_to(self.address, self.accounts[0], self.accounts[9], hash_of_foo, 0, index=666)
+        self.rpc.do(o)
+        o = receipt(tx_hash_hex)
+        r = self.conn.do(o)
+        self.assertEqual(r['status'], 1)
+        token_batch_id = hash_of_foo[:64-16] + '000000000000029a'
+
+        o = c.token_uri(self.address, int(token_batch_id, 16), sender_address=self.accounts[0])
+        r = self.rpc.do(o)
+        uri = c.parse_uri(r)
+        self.assertEqual(hash_of_foo, uri)
+
+
 if __name__ == '__main__':
     unittest.main()

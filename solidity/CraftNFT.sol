@@ -433,6 +433,10 @@ contract CraftNFT {
 		
 		_tokenIdBytes = bytes32(_tokenId);
 
+		if (token[_tokenIdBytes].length == 0) {
+			_tokenIdBytes = getDigest(_tokenIdBytes);
+			_tokenId = uint256(_tokenIdBytes);
+		}
 		require(token[_tokenIdBytes].length > 0);
 		return toURL(bytes32(_tokenId));
 	}

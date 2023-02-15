@@ -84,10 +84,11 @@ class Test(EthTesterCase):
         r = self.conn.do(o)
         self.assertEqual(r['status'], 1)
 
-        expected_id = hash_of_foo[:64-10] + '000000029a'
+        expected_id = hash_of_foo[:64-16] + '000000000000029a'
         o = c.get_token(self.address, expected_id, sender_address=self.accounts[0])
         r = self.rpc.do(o)
-        content = c.parse_token(r, hash_of_foo) 
+        content = c.parse_token(r, expected_id)
+        self.assertEqual(content.token_id, hash_of_foo);
 
         (tx_hash_hex, o) = c.mint_to(self.address, self.accounts[0], self.accounts[9], hash_of_foo, 0, index=666)
         self.rpc.do(o)
