@@ -92,7 +92,7 @@ class CraftNFT(ERC721):
 
 
     @staticmethod
-    def bytecode():
+    def bytecode(version=None):
         if CraftNFT.__bytecode == None:
             f = open(os.path.join(datadir, 'CraftNFT.bin'))
             CraftNFT.__bytecode = f.read()
@@ -104,19 +104,24 @@ class CraftNFT(ERC721):
     def gas(code=None):
         return 4000000
 
-    
-    def constructor(self, sender_address, name, symbol, declaration=None, tx_format=TxFormat.JSONRPC):
-        if declaration == None:
-            declaration = strip_0x(ZERO_CONTENT)
+
+    def constructor(self, sender_address, name, symbol, declaration=ZERO_ADDRESS, tx_format=TxFormat.JSONRPC, version=None):
+        code = self.cargs(name, symbol, declaration, version=version)
+        tx = self.template(sender_address, None, use_nonce=True)
+        tx = self.set_code(tx, code)
+        return self.finalize(tx, tx_format)
+
+
+    @staticmethod
+    def cargs(name, symbol, declaration, version=None):
+        declaration = strip_0x(declaration)
         code = CraftNFT.bytecode()
         enc = ABIContractEncoder()
         enc.string(name)
         enc.string(symbol)
         enc.bytes32(declaration)
         code += enc.get()
-        tx = self.template(sender_address, None, use_nonce=True)
-        tx = self.set_code(tx, code)
-        return self.finalize(tx, tx_format)
+        return code
 
     
     def allocate(self, contract_address, sender_address, token_id, amount=0, tx_format=TxFormat.JSONRPC):
@@ -359,3 +364,19 @@ class CraftNFT(ERC721):
     def parse_uri(self, v):
         r = abi_decode_single(ABIContractType.STRING, v)
         return r
+
+
+def bytecode(**kwargs):
+    return CraftNFT.bytecode(version=kwargs.get('version'))
+
+
+def create(**kwargs):
+    return CraftNFT.cargs(kwargs['name'], kwargs['symbol'], kwargs['declaration'], version=kwargs.get('version'))
+
+
+def args(v):
+    if v == 'create':
+        return (['name', 'symbol', 'declaration'], ['version'],)
+    elif v == 'default' or v == 'bytecode':
+        return ([], ['version'],)
+    raise ValueError('unknown command: ' + v)

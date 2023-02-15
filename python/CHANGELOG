@@ -1,3 +1,7 @@
+- 0.0.3
+	* Implement chainlib-gen
+	* Apply fully qualified URL for tokenUri, with mutable base url
+	* Include toURI method for hash uri generation
 - 0.0.2
 	* Add allocate and mint CLI tools
 - 0.0.1
