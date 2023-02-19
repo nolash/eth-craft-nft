@@ -86,7 +86,10 @@ async function signAndSend(addr) {
 		console.error('invalid ethereum address (too short)', addr);
 		return;
 	}
-	if (addr.substring(0, 2) == '0x') {
+	if (addr.substring(0, 9) == "ethereum:") { // metamask qr
+		addr = addr.substring(9);
+	}
+	if (addr.substring(0, 2) == "0x") {
 		addr = addr.substring(2);
 	}
 	const re = new RegExp("^[0-9a-fA-F]{40}$");
