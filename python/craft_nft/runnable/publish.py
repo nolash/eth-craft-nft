@@ -82,38 +82,11 @@ settings = process_settings(settings, config)
 logg.debug('settings loaded:\n{}'.format(settings))
 
 
-#arg_flags = chainlib.eth.cli.argflag_std_write
-#argparser = chainlib.eth.cli.ArgumentParser(arg_flags)
-#argparser.add_argument('--name', dest='token_name', type=str, help='Token name')
-#argparser.add_argument('--symbol', dest='token_symbol', type=str, help='Token symbol')
-#args = argparser.parse_args()
-#
-#extra_args = {
-#    'token_name': None,
-#    'token_symbol': None,
-#    }
-#config = chainlib.eth.cli.Config.from_args(args, arg_flags, extra_args=extra_args, default_fee_limit=CraftNFT.gas())
-
-#wallet = chainlib.eth.cli.Wallet()
-#wallet.from_config(config)
-
-#rpc = chainlib.eth.cli.Rpc(wallet=wallet)
-#conn = rpc.connect_by_config(config)
-
-#chain_spec = ChainSpec.from_chain_str(config.get('CHAIN_SPEC'))
-
-
 def main():
-    #signer = rpc.get_signer()
-    #signer_address = rpc.get_sender_address()
-
     token_name = config.get('_TOKEN_NAME')
     token_symbol = config.get('_TOKEN_SYMBOL')
     token_declaration = config.get('_TOKEN_DECLARATION̈́')
     conn = settings.get('CONN')
-
-#    gas_oracle = rpc.get_gas_oracle()
-#    nonce_oracle = rpc.get_nonce_oracle()
 
     c = CraftNFT(
             settings.get('CHAIN_SPEC'),

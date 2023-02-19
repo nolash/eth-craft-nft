@@ -5,9 +5,13 @@
 	"author": "Louis Holbrook <npm@holbrook.no> (https://holbrook.no)",
 	"license": "WTFPL",
 	"dependencies": {
-		"web3": "~1.8.1",
 		"@metamask/sdk": "~0.1.0",
-		"jssha": "~3.2.0"
+		"javascript-barcode-reader": "0.6.9",
+		"jsqr": "^1.4.0",
+		"jssha": "~3.2.0",
+		"web3": "~1.8.1",
+		"jsqr": "~1.4.0",
+		"ethers": "~5.7.2"
 	},
 	"scripts": {
 		"build": "browserify src/engine.js -s craftnft -p esmify -o dist/craft_nft.js"

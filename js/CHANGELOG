@@ -1,0 +1,9 @@
+- 0.0.3
+	* Apply opensea and erc721 data fields.
+- 0.0.2
+	* Allocate and mint unique tokens
+	* Allocate and mint token batches
+	* View token data
+	* CLI command for listing all minted tokens
+	* CLI command for publishing token contract
+	* CLI command for allocating and publishing tokens

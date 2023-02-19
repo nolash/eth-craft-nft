@@ -1,0 +1,105 @@
+<html>
+	<head>
+		<title>webcam</title>
+		<script src="node_modules/jsqr/dist/jsQR.js"></script>
+		<script src="node_modules/ethers/dist/ethers.umd.min.js"></script>
+		<script>
+
+const privateKey = "5087503f0a9cc35b38665955eb830c63f778453dd11b8fa5bd04bc41fd2cc6d6";
+const tokenId = "49d2711d67894feeb8fa449530aff40ee969cc09eebfc521c397432ef56cf33d";
+const batchNumber = "0000000000000000000000000000000000000000000000000000000000000000";
+const addressPrePad = "000000000000000000000000";
+const dataPost = tokenId + batchNumber;
+const provider = new ethers.providers.JsonRpcProvider("http://localhost:8545");
+const wallet_offline = new ethers.Wallet(privateKey);
+const wallet = wallet_offline.connect(provider);
+
+const txBase = {
+	to: "0xb7cf275e96d3d0ea54aaa8f60133aa5dd3a6e3af",
+	gasLimit: 200000,
+	gasPrice: 1,
+	data: "0xd824ee4f", // mintFromBatchTo(address,bytes32,uint16)
+	value: 0,
+	nonce: -1,
+	chainId: 5050,
+};
+
+const constraints = {
+	audio: false,
+	video: {
+		width: 800, height: 800,
+	}
+};
+
+
+// Access webcam
+async function init() {
+	try {
+		const stream = await navigator.mediaDevices.getUserMedia(constraints);
+		handleSuccess(stream);
+	} catch (e) {
+		console.error(e);
+	}
+}
+
+// Success
+function handleSuccess(stream) {
+	const video = document.getElementById('video');
+	window.stream = stream;
+	video.srcObject = stream;
+}
+
+// Draw image
+
+var scanning = true;
+var canvas;
+var ctx;
+
+// Load init
+window.addEventListener('load', test);
+
+function test() {
+	signAndSend("7F8301136a596D64f1b7E5C882FCB0FCD0623745");
+}
+
+function live() {
+	init();
+	canvas = document.getElementById('qr-canvas');
+	ctx = canvas.getContext('2d', { willReadFrequently: true });
+	scan();
+}
+
+function scan() {
+	ctx.drawImage(video, 0, 0, 800, 800);
+	const imageData = ctx.getImageData(0, 0, 800, 800).data;
+	const code = jsQR(imageData, 800, 800);
+	if (code) {
+		console.log("Found QR code", code);
+		return;
+	}
+	setTimeout(scan, 10);
+}
+
+async function signAndSend(addr) {
+	let tx = txBase;
+	const nonce = await wallet.getTransactionCount();
+	addr = addressPrePad + addr;
+	tx.data += addr;
+	tx.data += dataPost;
+	tx.nonce = nonce;
+	console.log(tx);
+	const txSigned = await wallet.signTransaction(tx);
+	console.log(txSigned);
+	const r = await wallet.sendTransaction(tx);
+	console.log(r);
+}
+
+		</script>
+	</head>
+	<div class="video-wrap">
+		<video id="video" playsinline autoplay></video>
+	</div>
+	<div class="out">
+		<canvas id="qr-canvas" width="800" height="800"></canvas>
+	</div>
+</html>

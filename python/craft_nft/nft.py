@@ -105,7 +105,7 @@ class CraftNFT(ERC721):
         return 4000000
 
 
-    def constructor(self, sender_address, name, symbol, declaration=ZERO_ADDRESS, tx_format=TxFormat.JSONRPC, version=None):
+    def constructor(self, sender_address, name, symbol, declaration=ZERO_CONTENT, tx_format=TxFormat.JSONRPC, version=None):
         code = self.cargs(name, symbol, declaration, version=version)
         tx = self.template(sender_address, None, use_nonce=True)
         tx = self.set_code(tx, code)

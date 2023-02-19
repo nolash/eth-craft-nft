@@ -53,7 +53,7 @@ class Test(EthTesterCase):
         (tx_hash, o) = c.constructor(self.accounts[0], 'DevBadge', 'DEV')
         self.conn = RPCConnection.connect(self.chain_spec, 'default')
         r = self.conn.do(o)
-        logg.debug('deployed with hash {}'.format(r))
+        logg.debug('smart contract published with hash {}'.format(r))
         
         o = receipt(r)
         r = self.conn.do(o)
