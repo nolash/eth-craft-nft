@@ -1,0 +1,11 @@
+div.pane {
+	display: none;
+}
+
+div#start {
+	display: block;
+}
+
+.statusBusy {
+	color: #00f;
+}
