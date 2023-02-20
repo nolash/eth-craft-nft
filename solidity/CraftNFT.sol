@@ -22,6 +22,9 @@ contract CraftNFT {
 	// Only the owner may mint tokens.
 	address public owner;
 
+	// Addresses with access to allocate and mint tokens..
+	mapping ( address => bool ) public writer;
+
 	// If set, ownership of the token contract cannot change.
 	bool ownerFinal;
 
@@ -93,6 +96,18 @@ contract CraftNFT {
 		return true;
 	}
 
+	// implements Writer
+	function addWriter(address _writer) public {
+		require(msg.sender == owner, 'ERR_ACCESS');
+		writer[_writer] = true;
+	}
+
+	// implements Writer
+	function deleteWriter(address _writer) public {
+		require(msg.sender == _writer || msg.sender == owner, 'ERR_ACCESS');
+		writer[_writer] = false;
+	}
+
 	// Check bit that is always set on the content data when a token has been minted.
 	function isActive(bytes32 _tokenContent) private pure returns(bool) {
 		return uint256(_tokenContent) & 0x8000000000000000000000000000000000000000000000000000000000000000 > 0;
@@ -124,7 +139,7 @@ contract CraftNFT {
 	// if count is set to 0, only a single unique token can be minted.
 	function allocate(bytes32 content, uint48 count) public returns (bool) {
 		uint256 l;
-		require(msg.sender == owner);
+		require(msg.sender == owner || writer[msg.sender]);
 		
 		tokenSpec memory _token;
 
@@ -161,7 +176,7 @@ contract CraftNFT {
 	function mintTo(address _recipient, bytes32 _content) public returns (bytes32) {
 		uint256 right;
 		
-		require(msg.sender == owner);
+		require(msg.sender == owner || writer[msg.sender]);
 		require(token[_content].length == 1);
 		require(token[_content][0].count == 0);
 		require(mintedToken[_content] == bytes32(0x00));
@@ -209,7 +224,7 @@ contract CraftNFT {
 			spec.cursor += 1;
 			return mintTo(_recipient, _content);
 		}
-		require(msg.sender == owner);
+		require(msg.sender == owner || writer[msg.sender]);
 		require(spec.cursor < spec.count);
 		return mintBatchCore(_recipient, _content, _batch, spec.cursor, spec);
 	}
@@ -224,7 +239,7 @@ contract CraftNFT {
 		tokenSpec storage spec;
 
 		spec = token[_content][_batch];
-		require(msg.sender == owner);
+		require(msg.sender == owner || writer[msg.sender]);
 		require(spec.count > 0);
 		require(_index < spec.count);
 		return mintBatchCore(_recipient, _content, _batch, _index, spec);
