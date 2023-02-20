@@ -40,22 +40,34 @@ window.addEventListener('uistate', (e) => {
 			document.getElementById("read").style.display = "block";
 			live();
 			break;
+		case STATE.SCAN_STOP:
+			window.stream.getTracks().forEach(track => track.stop());
+			break;
+		case STATE.SCAN_DONE:
+			document.getElementById("read").style.display = "none";
+			document.getElementById("product").style.display = "block";
+			break;
+
 		default:
 			throw 'invalid state ' + e.detail.delta;
 	}
 });
 
 window.addEventListener('token', (e) => {
+	const ls = document.getElementById('tokenChooser');
 	const v = e.detail.tokenId + '.' + e.detail.batch;
 	const input = document.createElement('input');
 	input.setAttribute('id', 'tokenBatch');
 	input.setAttribute('name', 'tokenBatch');
 	input.setAttribute('type', 'radio');
 	input.setAttribute('value', v);
+	console.log('lastchild', ls.lastChild);
+	if (ls.lastChild === null) {
+		input.setAttribute('checked', 'checked');
+	}
 	const label = document.createElement('label');
 	label.setAttribute('for', v);
 	label.innerHTML = v;
-	const ls = document.getElementById('tokenChooser');
 	ls.appendChild(input);
 	ls.appendChild(label);
 });

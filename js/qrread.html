@@ -44,6 +44,28 @@ window.addEventListener('load', () => {
 		const amount = document.getElementById("requestAmount").value;
 		return requestHandler(tokenBatch, amount);
 	});
+	document.getElementById('scanAbort').addEventListener("click", (o) => {
+		const e = new CustomEvent('uistate', {
+			detail: {
+				delta: STATE.SCAN_STOP,
+				settings: settings,
+			},
+			bubbles: true,
+			cancelable: true,
+			composed: false,
+		});
+		const ee = new CustomEvent('uistate', {
+			detail: {
+				delta: STATE.SCAN_DONE,
+				settings: settings,
+			},
+			bubbles: true,
+			cancelable: true,
+			composed: false,
+		});
+		window.dispatchEvent(e);
+		window.dispatchEvent(ee);
+	});
 });
 
 		</script>
@@ -94,5 +116,6 @@ window.addEventListener('load', () => {
 		<div class="out">
 			<canvas id="qr-canvas" width="800" height="800"></canvas>
 		</div>
+		<button id="scanAbort">abort</button>
 	</div>
 </html>
