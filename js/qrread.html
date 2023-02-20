@@ -10,14 +10,6 @@
 
 const MAX_MINT = 4;
 
-//const privateKey = "5087503f0a9cc35b38665955eb830c63f778453dd11b8fa5bd04bc41fd2cc6d6";
-//const tokenId = "49d2711d67894feeb8fa449530aff40ee969cc09eebfc521c397432ef56cf33d";
-//const batchNumber = "0000000000000000000000000000000000000000000000000000000000000000";
-//const addressPrePad = "000000000000000000000000";
-//const provider = new ethers.providers.JsonRpcProvider("http://localhost:8545");
-//const wallet_offline = new ethers.Wallet(privateKey);
-//const wallet = wallet_offline.connect(provider);
-//
 window.addEventListener('load', () => {
 	for (let i = 1; i <= MAX_MINT; i<<=1) {
 		const opt = document.createElement('option');
@@ -90,7 +82,7 @@ window.addEventListener('load', () => {
 	</div>
 	<div class="pane" id="contract">
 		<label for="contractAddress">Contract address</label>
-		<input type="text" id="contractAddress" />
+		<input type="text" id="contractAddress" size="42" />
 		<button id="contractSubmit">connect to contract</button>
 	</div>
 	<div class="pane" id="product">
@@ -110,12 +102,12 @@ window.addEventListener('load', () => {
 			<dt>Amount</dt>
 			<dd id="scanTokenAmount"></dd>
 		</dl>
-		<!--<div class="video-wrap">
-			<video id="video" playsinline autoplay></video>
-		</div>-->
 		<div class="out">
-			<canvas id="qr-canvas" width="800" height="800"></canvas>
+			<canvas id="qr-canvas" width="400" height="400"></canvas>
 		</div>
+		<label for="scanAddress">Recipient address</label>
+		<input type="text" id="scanAddress" size="42" />
+		<ol id="txList"></ol>
 		<button id="scanAbort">abort</button>
 	</div>
 </html>

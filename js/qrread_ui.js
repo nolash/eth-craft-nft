@@ -40,6 +40,9 @@ window.addEventListener('uistate', (e) => {
 			document.getElementById("read").style.display = "block";
 			live();
 			break;
+		case STATE.SCAN_RESULT:
+			document.getElementById('scanAddress').value = e.detail.settings.recipient;
+			break;
 		case STATE.SCAN_STOP:
 			window.stream.getTracks().forEach(track => track.stop());
 			break;
@@ -70,6 +73,19 @@ window.addEventListener('token', (e) => {
 	label.innerHTML = v;
 	ls.appendChild(input);
 	ls.appendChild(label);
+});
+
+window.addEventListener('tx', (e) => {
+	const ls = document.getElementById('txList');
+	const li = document.createElement('li');
+	const l = document.createElement('span');
+	l.innerHTML = e.detail.tx.hash;
+	const r = document.createElement('span');
+	r.setAttribute('id', 'status.' + e.detail.tx.hash);
+	r.innerHTML = 'status: pending';
+	li.appendChild(l);
+	li.appendChild(r);
+	ls.appendChild(li);
 });
 
 function updateSettingsView(k, v) {
@@ -124,23 +140,36 @@ function scan() {
 	const code = jsQR(imageData, 400, 400);
 	if (code) {
 		console.log("Found QR code", code);
-		signAndSend(code.data);
+		let addr = code.data;
+		if (addr.length < 40) {
+			console.error('invalid ethereum address (too short)', addr);
+			return;
+		}
+		if (addr.substring(0, 9) == "ethereum:") { // metamask qr
+			addr = addr.substring(9);
+		}
+		if (addr.substring(0, 2) == "0x") {
+			addr = addr.substring(2);
+		}
+		settings.recipient = addr;
+		const e = new CustomEvent('uistate', {
+			detail: {
+				delta: STATE.SCAN_RESULT,
+				settings: settings,
+			},
+			bubbles: true,
+			cancelable: true,
+			composed: false,
+		});
+		window.dispatchEvent(e);
+		signAndSend(addr);
 		return;
 	}
 	setTimeout(scan, 10);
 }
 
 async function signAndSend(addr) {
-	if (addr.length < 40) {
-		console.error('invalid ethereum address (too short)', addr);
-		return;
-	}
-	if (addr.substring(0, 9) == "ethereum:") { // metamask qr
-		addr = addr.substring(9);
-	}
-	if (addr.substring(0, 2) == "0x") {
-		addr = addr.substring(2);
-	}
+
 	const re = new RegExp("^[0-9a-fA-F]{40}$");
 	const m = addr.match(re);
 	if (m === null) {
@@ -149,14 +178,29 @@ async function signAndSend(addr) {
 	}
 	console.info('found recipient address', addr);
 	let tx = txBase;
-	const nonce = await settings.wallet.getTransactionCount();
+	let nonce = await settings.wallet.getTransactionCount();
 	addr = addressPrePad + addr;
 	tx.data += addr;
 	tx.data += settings.dataPost;
-	tx.nonce = nonce;
-	console.log(tx);
-	const txSigned = await settings.wallet.signTransaction(tx);
-	console.log(txSigned);
-	const r = await settings.wallet.sendTransaction(tx);
-	console.log(r);
+
+	for (let i = 0; i < settings.mintAmount; i++) {
+		let txCopy = tx;
+		txCopy.nonce = nonce;
+		const txSigned = await settings.wallet.signTransaction(tx);
+		console.log(txSigned);
+		const txr = await settings.wallet.sendTransaction(txCopy);
+		const e = new CustomEvent('tx', {
+			detail: {
+				settings: settings,
+				tx: txr,
+				mintAmount: settings.mintAmount,
+			},
+			bubbles: true,
+			cancelable: true,
+			composed: false,
+		});
+		window.dispatchEvent(e);
+		console.debug(txr);
+		nonce++;
+	}
 }

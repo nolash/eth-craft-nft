@@ -5,10 +5,11 @@ const STATE = {
 	CONTRACT_SETTINGS: 4,
 	MINT: 8,
 	SCAN_START: 16,
-	SCAN_STOP: 32,
-	SCAN_DONE: 64,
-	TX_FLIGHT: 128,
-	TX_RESULT: 256,
+	SCAN_RESULT: 32,
+	SCAN_STOP: 64,
+	SCAN_DONE: 128,
+	TX_FLIGHT: 256,
+	TX_RESULT: 512,
 };
 
 var settings = {
@@ -21,6 +22,7 @@ var settings = {
 	chainId: undefined,
 	dataPost: undefined,
 	mintAmount: 1,
+	recipient: undefined,
 };
 
 const txBase = {
@@ -112,6 +114,10 @@ async function contractHandler(contractAddress) {
 				if (batch.count == 0) {
 					console.debug('skipping unique token', tokenId);
 					break;
+				} else if (batch.sparse) {
+					console.debug('skip sparse token', tokenId);
+					j++;
+					continue;
 				}
 				const e = new CustomEvent('token', {
 					detail: {
@@ -151,8 +157,9 @@ function requestHandler(tokenBatch, amount) {
 	const v = tokenBatch.split('.');
 	let batchNumberHex = "0000000000000000000000000000000000000000000000000000000000000000" + v[1].toString(16);
 	batchNumberHex = batchNumberHex.slice(-64);
-	settings.dataPost = v[0] + batchNumberHex;
-	settings.tokenId = v[0];
+	let tokenId  = v[0].substring(2);
+	settings.dataPost = tokenId + batchNumberHex;
+	settings.tokenId = tokenId;
 	settings.batchNumber = v[1];
 	settings.mintAmount = amount;
 	const e = new CustomEvent('uistate', {
