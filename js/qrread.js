@@ -21,6 +21,8 @@ var settings = {
 	wallet: undefined,
 	chainId: undefined,
 	dataPost: undefined,
+	metaInterface: undefined,
+	metaCanWrite: false,
 	mintAmount: 1,
 	minedAmount: 0,
 	failedAmount: 0,
@@ -167,11 +169,27 @@ async function scanContract(addr) {
 	setTimeout(scanContractTokens, 0, addr);
 }
 
-function contractHandler(addr) {
+async function contractHandler(addr) {
 	checkState(STATE.WALLET_SETTINGS | STATE.NETWORK_SETTINGS, true);
 	setStatus('check if wallet can mint...', STATUS_BUSY);
 	setTimeout(checkContractOwner, 0, addr);
 
+}
+
+async function metaHandler(url) {
+	settings.metaInterface = new Wala(url);
+	try {
+		settings.metaInterface.put('foo');
+		settings.metaCanWrite = true;
+	} catch {
+		console.warn('cannot write to data URL', url);
+	}
+	//try {
+	//	settings.metaInterface.get('');
+	//} catch(e) {
+	//	console.warn('cannot read from data URL', url, e);
+	//	settings.metaInterace = undefined;
+	//}
 }
 
 async function scanContractTokens(contractAddress) {
@@ -237,12 +255,41 @@ async function scanContractTokens(contractAddress) {
 	setStatus('found ' + c + ' available token batches in contract', STATUS_OK);
 }
 
-function requestHandler(tokenBatch, amount) {
-	setStatus('scan QR code or manually enter address...', STATUS_BUSY);
+async function scanTokenMetadata(tokenId) {
+	if (settings.metaInterface === undefined) {
+		console.debug('skip metadata lookup since interface is not available');
+		return;
+	}
+	setStatus('scan token metadata...', STATUS_BUSY);
+	if (tokenId.length < 64) {
+		setStatus('invalid token id length', STATUS_ERROR);
+		throw 'invalid token id length';
+	} else if (tokenId.substring(0, 2) == '0x') {
+		tokenId = tokenId.substring(2);
+	}
+	let r = undefined;
+	try {
+		r = await settings.metaInterface.get(tokenId);
+	} catch(e) {
+		setStatus('metadata lookup failed', STATUS_ERROR);
+		document.getElementById('scanTokenMetaName').innerHTML = '(unavailable)';
+		document.getElementById('scanTokenMetaDescription').innerHTML = '(unavailable)';
+		return;
+	}
+	const o = JSON.parse(r);
+	setStatus('found token metadata', STATUS_OK);
+	console.debug('metadata token', tokenId, o);
+	document.getElementById('scanTokenMetaName').innerHTML = o['name'];
+	document.getElementById('scanTokenMetaDescription').innerHTML = o['description'];
+}
+
+async function requestHandler(tokenBatch, amount) {
 	const v = tokenBatch.split('.');
 	let batchNumberHex = "0000000000000000000000000000000000000000000000000000000000000000" + v[1].toString(16);
 	batchNumberHex = batchNumberHex.slice(-64);
 	let tokenId  = v[0].substring(2);
+	await scanTokenMetadata(tokenId);
+	setStatus('scan QR code or manually enter address...', STATUS_BUSY);
 	settings.dataPost = tokenId + batchNumberHex;
 	settings.tokenId = tokenId;
 	settings.batchNumber = v[1];

@@ -3,6 +3,7 @@
 		<title>webcam</title>
 		<script src="node_modules/jsqr/dist/jsQR.js"></script>
 		<script src="node_modules/ethers/dist/ethers.umd.min.js"></script>
+		<script src="src/wala.js"></script>
 		<script src="qrread.js"></script>
 		<script src="qrread_ui.js"></script>
 		<link rel="stylesheet" href="style.css"></link>
@@ -25,18 +26,28 @@ window.addEventListener('load', () => {
 		return keyFileHandler(keyFile, keyFilePassword);
 	});
 	document.getElementById('chainSubmit').addEventListener("click", (o) => {
-		const chainId = document.getElementById("chainId").value;
-		const chainRpcUrl = document.getElementById("chainRpcUrl").value;
 		const submit = document.getElementById('chainSubmit');
 		submit.setAttribute('disabled', 1);
-		return chainHandler(chainRpcUrl, chainId);
+		const chainId = document.getElementById("chainId").value;
+		const chainRpcUrl = document.getElementById("chainRpcUrl").value;
+		chainHandler(chainRpcUrl, chainId);
+		let metaUrl = document.getElementById("metaUrl").value;
+		if (metaUrl != '') {
+			metaHandler(metaUrl);
+		}
 	});
 	document.getElementById('contractSubmit').addEventListener("click", (o) => {
 		const tokenAddress = document.getElementById("contractAddress").value;
 		return contractHandler(tokenAddress);
 	});
 	document.getElementById('requestSubmit').addEventListener("click", (o) => {
-		const tokenBatch = document.getElementById("tokenBatch").value;
+		let tokenBatch = undefined;
+		const batches = document.getElementsByName('tokenBatch');
+		for(let i = 0; i < batches.length; i++){
+			if(batches[i].checked){
+				tokenBatch = batches[i].value;
+			}
+		}
 		const amount = document.getElementById("requestAmount").value;
 		return requestHandler(tokenBatch, amount);
 	});
@@ -95,6 +106,8 @@ window.addEventListener('load', () => {
 		<input type="text" id="chainRpcUrl" value="http://localhost:8545" />
 		<label for="chainId">Chain ID</label>
 		<input type="text" id="chainId" />
+		<label for="metaUrl">Data URL (optional)</label>
+		<input type="text" id="metaUrl" value="" /> 
 		<button id="chainSubmit">connect to network</button>
 	</div>
 	<div class="pane" id="contract">
@@ -110,10 +123,14 @@ window.addEventListener('load', () => {
 		<button id="requestSubmit">create request</button>
 	</div>
 	<div class="pane" id="read">
-		<h2>Scan QR code</h2>
+		<h2>Mint token(s)</h2>
 		<dl>
 			<dt>Token Id</dt>
 			<dd id="scanTokenId"></dd>
+			<dt>Token Name</dt>
+			<dd id="scanTokenMetaName">(unavailable)</dd>
+			<dt>Token Description</dt>
+			<dd id="scanTokenMetaDescription">(unavailable)</dd>
 			<dt>Batch</dt>
 			<dd id="scanTokenBatch"></dd>
 			<dt>Amount</dt>

@@ -98,7 +98,7 @@ window.addEventListener('token', (e) => {
 	const ls = document.getElementById('tokenChooser');
 	const v = e.detail.tokenId + '.' + e.detail.batch;
 	const input = document.createElement('input');
-	input.setAttribute('id', 'tokenBatch');
+	input.setAttribute('id', 'tokenBatch.' + v);
 	input.setAttribute('name', 'tokenBatch');
 	input.setAttribute('type', 'radio');
 	input.setAttribute('value', v);
