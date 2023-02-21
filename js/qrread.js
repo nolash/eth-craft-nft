@@ -8,8 +8,6 @@ const STATE = {
 	SCAN_RESULT: 32,
 	SCAN_STOP: 64,
 	SCAN_DONE: 128,
-	TX_FLIGHT: 256,
-	TX_RESULT: 512,
 };
 
 var settings = {
@@ -22,6 +20,7 @@ var settings = {
 	chainId: undefined,
 	dataPost: undefined,
 	mintAmount: 1,
+	minedAmount: 0,
 	recipient: undefined,
 };
 

@@ -86,7 +86,19 @@ window.addEventListener('tx', (e) => {
 	li.appendChild(l);
 	li.appendChild(r);
 	ls.appendChild(li);
+	watchTx(e.detail.tx);
 });
+
+async function watchTx(tx) {
+	const rcpt = await settings.provider.waitForTransaction(tx.hash);
+	const txRow = document.getElementById('status.' + tx.hash);
+	console.debug('rcpt', rcpt);
+	if (rcpt.status == 1) {
+		txRow.innerHTML = 'status: confirmed';
+	} else {
+		txRow.innerHTML = 'status: failed';
+	}
+}
 
 function updateSettingsView(k, v) {
 	const dl = document.getElementById("settingsView");
