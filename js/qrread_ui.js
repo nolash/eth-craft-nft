@@ -52,6 +52,8 @@ window.addEventListener('uistate', (e) => {
 			break;
 		case STATE.CONTRACT_SETTINGS:
 			updateSettingsView('NFT contract address', e.detail.settings.tokenAddress);
+			updateSettingsView('NFT name', e.detail.settings.tokenName);
+			updateSettingsView('NFT symbol', e.detail.settings.tokenSymbol);
 			document.getElementById("contract").style.display = "none";
 			document.getElementById("product").style.display = "block";
 			break;
@@ -85,7 +87,8 @@ window.addEventListener('uistate', (e) => {
 			document.getElementById("scanAbort").style.display = "none";
 			document.getElementById("scanReturn").style.display = "block";
 			break;
-
+		case STATE.AIEE:
+			throw 'execution terminated';
 		default:
 			throw 'invalid state ' + e.detail.delta;
 	}

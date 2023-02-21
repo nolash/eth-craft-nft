@@ -23,7 +23,7 @@ contract CraftNFT {
 	address public owner;
 
 	// Addresses with access to allocate and mint tokens..
-	mapping ( address => bool ) public writer;
+	mapping ( address => bool ) writer;
 
 	// If set, ownership of the token contract cannot change.
 	bool ownerFinal;
@@ -106,6 +106,11 @@ contract CraftNFT {
 	function deleteWriter(address _writer) public {
 		require(msg.sender == _writer || msg.sender == owner, 'ERR_ACCESS');
 		writer[_writer] = false;
+	}
+
+	// implements Writer
+	function isWriter(address _writer) public view returns(bool) {
+		return writer[_writer] || _writer == owner;
 	}
 
 	// Check bit that is always set on the content data when a token has been minted.
@@ -219,12 +224,12 @@ contract CraftNFT {
 	
 		spec = token[_content][uint256(_batch)];
 
-		require(!spec.sparse);
+		require(!spec.sparse, 'ERR_SPARSE');
 		if (_batch == 0 && spec.count == 0) {
 			spec.cursor += 1;
 			return mintTo(_recipient, _content);
 		}
-		require(msg.sender == owner || writer[msg.sender]);
+		require(msg.sender == owner || writer[msg.sender], 'ERR_ACCESS');
 		require(spec.cursor < spec.count);
 		return mintBatchCore(_recipient, _content, _batch, spec.cursor, spec);
 	}
@@ -239,7 +244,7 @@ contract CraftNFT {
 		tokenSpec storage spec;
 
 		spec = token[_content][_batch];
-		require(msg.sender == owner || writer[msg.sender]);
+		require(msg.sender == owner || writer[msg.sender], 'ERR_ACCESS');
 		require(spec.count > 0);
 		require(_index < spec.count);
 		return mintBatchCore(_recipient, _content, _batch, _index, spec);
