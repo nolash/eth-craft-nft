@@ -7,5 +7,24 @@ div#start {
 }
 
 .statusBusy {
-	color: #00f;
+	color: #ffa500;
+}
+
+.statusError {
+	color: #c00;
+}
+
+.statusOk {
+	color: #0c0;
+}
+
+.statusInfo {
+	color: #00c;
+}
+
+
+#scanConfirm,
+#scanReturn {
+	display: none;
+
 }

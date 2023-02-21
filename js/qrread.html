@@ -20,11 +20,15 @@ window.addEventListener('load', () => {
 	document.getElementById('keyFileSubmit').addEventListener("click", (o) => {
 		const keyFile = document.getElementById("keyFile").value;
 		const keyFilePassword = document.getElementById("keyFilePassword").value;
+		const submit = document.getElementById('keyFileSubmit');
+		submit.setAttribute('disabled', 1);
 		return keyFileHandler(keyFile, keyFilePassword);
 	});
 	document.getElementById('chainSubmit').addEventListener("click", (o) => {
 		const chainId = document.getElementById("chainId").value;
 		const chainRpcUrl = document.getElementById("chainRpcUrl").value;
+		const submit = document.getElementById('chainSubmit');
+		submit.setAttribute('disabled', 1);
 		return chainHandler(chainRpcUrl, chainId);
 	});
 	document.getElementById('contractSubmit').addEventListener("click", (o) => {
@@ -58,6 +62,19 @@ window.addEventListener('load', () => {
 		window.dispatchEvent(e);
 		window.dispatchEvent(ee);
 	});
+	document.getElementById('scanConfirm').addEventListener("click", (o) => {
+		const e = new CustomEvent('uistate', {
+			detail: {
+				delta: STATE.SCAN_CONFIRM,
+				settings: settings,
+			},
+			bubbles: true,
+			cancelable: true,
+			composed: false,
+		});
+		window.dispatchEvent(e);
+	});
+	setStatus('waiting for wallet', STATUS_BUSY);
 });
 
 		</script>
@@ -108,6 +125,9 @@ window.addEventListener('load', () => {
 		<label for="scanAddress">Recipient address</label>
 		<input type="text" id="scanAddress" size="42" />
 		<ol id="txList"></ol>
+		<button id="scanManualMint">mint</button>
+		<button id="scanConfirm">confirm</button>
 		<button id="scanAbort">abort</button>
+		<button id="scanReturn">return</button>
 	</div>
 </html>

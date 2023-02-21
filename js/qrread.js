@@ -7,7 +7,8 @@ const STATE = {
 	SCAN_START: 16,
 	SCAN_RESULT: 32,
 	SCAN_STOP: 64,
-	SCAN_DONE: 128,
+	SCAN_CONFIRM: 128,
+	SCAN_DONE: 256,
 };
 
 var settings = {
@@ -21,6 +22,7 @@ var settings = {
 	dataPost: undefined,
 	mintAmount: 1,
 	minedAmount: 0,
+	failedAmount: 0,
 	recipient: undefined,
 };
 
@@ -48,111 +50,159 @@ function checkState(stateCheck, exact) {
 	}
 }
 
-function keyFileHandler(v, passphrase) {
-	settings.wallet = ethers.Wallet.fromEncryptedJsonSync(v, passphrase);
+async function signAndSend() {
+	let addr = settings.recipient;
+	console.info('found recipient address', addr);
+	let tx = txBase;
+	let nonce = await settings.wallet.getTransactionCount();
+	addr = addressPrePad + addr;
+	tx.data += addr;
+	tx.data += settings.dataPost;
+
+	for (let i = 0; i < settings.mintAmount; i++) {
+		setStatus('signing and sending transaction ' + (i + 1) + ' of ' + settings.mintAmount + '...', STATUS_BUSY);
+		let txCopy = tx;
+		txCopy.nonce = nonce;
+		const txSigned = await settings.wallet.signTransaction(tx);
+		console.log(txSigned);
+		const txr = await settings.wallet.sendTransaction(txCopy);
+		setStatus('sent transaction ' + (i + 1) + ' of ' + settings.mintAmount, STATUS_OK);
+		const e = new CustomEvent('tx', {
+			detail: {
+				settings: settings,
+				tx: txr,
+				mintAmount: settings.mintAmount,
+			},
+			bubbles: true,
+			cancelable: true,
+			composed: false,
+		});
+		window.dispatchEvent(e);
+		console.debug(txr);
+		nonce++;
+	}
+}
+
+async function keyFileHandler(v, passphrase) {
+	setStatus('unlocking keyfile...', STATUS_BUSY);
 	console.debug('wallet', settings.wallet);
-	state |= STATE.WALLET_SETTINGS;
-	const e = new CustomEvent('uistate', {
-		detail: {
-			delta: STATE.WALLET_SETTINGS,
-			settings: settings,
-		},
-		bubbles: true,
-		cancelable: true,
-		composed: false,
-	});
-	window.dispatchEvent(e);
+	// make sure dom updates are executed before unlock
+	setTimeout(() => {
+		settings.wallet = ethers.Wallet.fromEncryptedJsonSync(v, passphrase);
+		state |= STATE.WALLET_SETTINGS;
+		const e = new CustomEvent('uistate', {
+			detail: {
+				delta: STATE.WALLET_SETTINGS,
+				settings: settings,
+			},
+			bubbles: true,
+			cancelable: true,
+			composed: false,
+		});
+		window.dispatchEvent(e);
+		setStatus('keyfile unlocked', STATUS_OK);
+	}, 0);
 	return true;
 }
 
 async function chainHandler(rpc, chainId) {
-	settings.provider = new ethers.providers.JsonRpcProvider("http://localhost:8545");
-	settings.wallet = settings.wallet.connect(settings.provider);
-	const network = await settings.provider.getNetwork();
-	console.debug('connected to network', network, settings.provider);
-	if (network.chainId != chainId) {
-		throw 'chainId mismatch, requested ' + chainId + ', got ' + network.chainId;
-	}
-	settings.chainId = chainId;
-	state |= STATE.CHAIN_SETTINGS;
-	const e = new CustomEvent('uistate', {
-		detail: {
-			delta: STATE.CHAIN_SETTINGS,
-			settings: settings,
-		},
-		bubbles: true,
-		cancelable: true,
-		composed: false,
-	});
-	window.dispatchEvent(e);
+	setStatus('connecting to network', STATUS_BUSY);
+	setTimeout(async () => {
+		settings.provider = new ethers.providers.JsonRpcProvider("http://localhost:8545");
+		settings.wallet = settings.wallet.connect(settings.provider);
+		const network = await settings.provider.getNetwork();
+		console.debug('connected to network', network, settings.provider);
+		if (network.chainId != chainId) {
+			throw 'chainId mismatch, requested ' + chainId + ', got ' + network.chainId;
+		}
+		settings.chainId = chainId;
+		state |= STATE.CHAIN_SETTINGS;
+		const e = new CustomEvent('uistate', {
+			detail: {
+				delta: STATE.CHAIN_SETTINGS,
+				settings: settings,
+			},
+			bubbles: true,
+			cancelable: true,
+			composed: false,
+		});
+		window.dispatchEvent(e);
+		setStatus('connected to network', STATUS_OK);
+	}, 0);
 	return true;
 }
 
 async function contractHandler(contractAddress) {
 	checkState(STATE.WALLET_SETTINGS | STATE.NETWORK_SETTINGS, true);
-	const contract = new ethers.Contract(contractAddress, nftAbi, settings.provider);
-	let i = 0;
-	let tokens = [];
-	while (true) {
-		try {
-			const tokenId = await contract.tokens(i);
-			tokens.push(tokenId);
-		} catch(e) {
-			break;
-		}
-		i++;
-	}
-
-	for (let i = 0; i < tokens.length; i++) {
-		const tokenId = tokens[i];
-		const uri = await contract.tokenURI(ethers.BigNumber.from(tokenId));
-		let j = 0;
+	setStatus('scanning contract for tokens...', STATUS_BUSY);
+	setTimeout(async () => {
+		const contract = new ethers.Contract(contractAddress, nftAbi, settings.provider);
+		let i = 0;
+		let tokens = [];
 		while (true) {
 			try {
-				const batch = await contract.token(tokenId, j);
-				if (batch.count == 0) {
-					console.debug('skipping unique token', tokenId);
-					break;
-				} else if (batch.sparse) {
-					console.debug('skip sparse token', tokenId);
-					j++;
-					continue;
-				}
-				const e = new CustomEvent('token', {
-					detail: {
-						tokenId: tokenId,
-						batch: j,
-					},
-					bubbles: true,
-					cancelable: true,
-					composed: false,
-				});
-				window.dispatchEvent(e);
-				console.debug('bat', batch);
-			} catch {
+				const tokenId = await contract.tokens(i);
+				tokens.push(tokenId);
+			} catch(e) {
 				break;
 			}
-			j++;
+			i++;
 		}
-	}
-	
 
-	settings.tokenAddress = contractAddress;
-	state |= STATE.CONTRACT_SETTINGS;
-	const e = new CustomEvent('uistate', {
-		detail: {
-			delta: STATE.CONTRACT_SETTINGS,
-			settings: settings,
-		},
-		bubbles: true,
-		cancelable: true,
-		composed: false,
-	});
-	window.dispatchEvent(e);
+		let c = 0;
+		for (let i = 0; i < tokens.length; i++) {
+			const tokenId = tokens[i];
+			const uri = await contract.tokenURI(ethers.BigNumber.from(tokenId));
+			let j = 0;
+			while (true) {
+				try {
+					const batch = await contract.token(tokenId, j);
+					if (batch.count == 0) {
+						console.debug('skipping unique token', tokenId);
+						break;
+					} else if (batch.sparse) {
+						console.debug('skip sparse token', tokenId);
+						j++;
+						continue;
+					}
+					const e = new CustomEvent('token', {
+						detail: {
+							tokenId: tokenId,
+							batch: j,
+						},
+						bubbles: true,
+						cancelable: true,
+						composed: false,
+					});
+					window.dispatchEvent(e);
+					c++;
+				} catch {
+					break;
+				}
+				j++;
+			}
+		}
+		
+
+		settings.tokenAddress = contractAddress;
+		state |= STATE.CONTRACT_SETTINGS;
+		const e = new CustomEvent('uistate', {
+			detail: {
+				delta: STATE.CONTRACT_SETTINGS,
+				settings: settings,
+			},
+			bubbles: true,
+			cancelable: true,
+			composed: false,
+		});
+		window.dispatchEvent(e);
+		setStatus('found ' + c + ' available token batches in contract', STATUS_OK);
+	}, 0);
 	return true;
 }
 
 function requestHandler(tokenBatch, amount) {
+	setStatus('scan QR code or manually enter address...', STATUS_BUSY);
 	const v = tokenBatch.split('.');
 	let batchNumberHex = "0000000000000000000000000000000000000000000000000000000000000000" + v[1].toString(16);
 	batchNumberHex = batchNumberHex.slice(-64);
