@@ -124,13 +124,15 @@ class CraftNFT(ERC721):
         return code
 
     
-    def allocate(self, contract_address, sender_address, token_id, amount=0, tx_format=TxFormat.JSONRPC):
+    def allocate(self, contract_address, sender_address, token_id, amount=0, soul_bound=False,tx_format=TxFormat.JSONRPC):
         enc = ABIContractEncoder()
         enc.method('allocate')
         enc.typ(ABIContractType.BYTES32)
         enc.typ(ABIContractType.UINT48)
+        enc.typ(ABIContractType.BOOLEAN)
         enc.bytes32(token_id)
         enc.uintn(amount, 48)
+        enc.boolean(soul_bound)
         data = enc.get()
         tx = self.template(sender_address, contract_address, use_nonce=True)
         tx = self.set_code(tx, data)

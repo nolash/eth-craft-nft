@@ -16,6 +16,7 @@ contract CraftNFT {
 		uint48 count;
 		uint48 cursor;
 		bool sparse;
+		bool soulBound; // cannot change hands after mint
 	}
 
 	// The owner of the token contract.
@@ -142,7 +143,7 @@ contract CraftNFT {
 
 	// Allocate tokens for minting.
 	// if count is set to 0, only a single unique token can be minted.
-	function allocate(bytes32 content, uint48 count) public returns (bool) {
+	function allocate(bytes32 content, uint48 count, bool _soulBound) public returns (bool) {
 		uint256 l;
 		require(msg.sender == owner || writer[msg.sender]);
 		
@@ -154,6 +155,7 @@ contract CraftNFT {
 		}
 
 		_token.count = count;
+		_token.soulBound = _soulBound;
 		token[content].push(_token);
 		tokens.push(content);
 
