@@ -54,6 +54,10 @@ window.addEventListener('uistate', (e) => {
 			updateSettingsView('NFT contract address', e.detail.settings.tokenAddress);
 			updateSettingsView('NFT name', e.detail.settings.tokenName);
 			updateSettingsView('NFT symbol', e.detail.settings.tokenSymbol);
+			updateSettingsView('Voucher contract address', e.detail.settings.voucherAddress);
+			updateSettingsView('Voucher name', e.detail.settings.voucherName);
+			updateSettingsView('Voucher symbol', e.detail.settings.voucherSymbol);
+			updateSettingsView('Voucher decimals', e.detail.settings.voucherDecimals);
 			document.getElementById("contract").style.display = "none";
 			document.getElementById("product").style.display = "block";
 			break;

@@ -10,8 +10,10 @@
 		<script>
 
 const MAX_MINT = 4;
+const BATCH_UNIT_VALUE = 500;
 
 window.addEventListener('load', () => {
+	settings.batchUnitValue = BATCH_UNIT_VALUE;
 	for (let i = 1; i <= MAX_MINT; i<<=1) {
 		const opt = document.createElement('option');
 		opt.setAttribute('value', i);
@@ -38,7 +40,8 @@ window.addEventListener('load', () => {
 	});
 	document.getElementById('contractSubmit').addEventListener("click", (o) => {
 		const tokenAddress = document.getElementById("contractAddress").value;
-		return contractHandler(tokenAddress);
+		const voucherAddress = document.getElementById("voucherAddress").value;
+		return contractHandler(tokenAddress, voucherAddress);
 	});
 	document.getElementById('requestSubmit').addEventListener("click", (o) => {
 		let tokenBatch = undefined;
@@ -111,12 +114,15 @@ window.addEventListener('load', () => {
 		<button id="chainSubmit">connect to network</button>
 	</div>
 	<div class="pane" id="contract">
-		<label for="contractAddress">Contract address</label>
+		<label for="contractAddress">NFT Contract address</label>
 		<input type="text" id="contractAddress" size="42" />
+		<label for="voucherAddress">Voucher address</label>
+		<input type="text" id="voucherAddress" size="42" />
+
 		<button id="contractSubmit">connect to contract</button>
 	</div>
 	<div class="pane" id="product">
-		<label for="requestTokenChooser">Choose token</label>
+		<label for="requestTokenChooser">Choose NFT token</label>
 		<div id="tokenChooser"></div>
 		<label for="requestAmount">Choose mint amount</label>
 		<select id="requestAmount"></select>
