@@ -1,4 +1,5 @@
 - 0.0.4
+	* Add per-token tokenURI support
 	* Add support for unbounded, cappable batches
 - 0.0.3
 	* Implement chainlib-gen
