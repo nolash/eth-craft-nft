@@ -143,6 +143,7 @@ contract CraftNFT {
 
 	// Allocate tokens for minting.
 	// if count is set to 0, only a single unique token can be minted.
+	// if count is set a negative number, the token will be unbounded (may be capped later with setCap).
 	function allocate(bytes32 content, int48 count) public returns (bool) {
 		uint256 l;
 		require(msg.sender == owner || writer[msg.sender], 'ERR_ACCESS');
@@ -215,12 +216,17 @@ contract CraftNFT {
 		mintedToken[_k] = bytes32(_data);
 	}
 
+	// Apply cap on unbounded token
+	// if cap value is set to 0, cap will be set on the current count.
 	function setCap(bytes32 _content, uint16 _batch, uint48 _cap) public {
 		tokenSpec storage spec;
 
 		spec = token[_content][uint256(_batch)];
 		require(!spec.sparse, 'ERR_SPARSE');
 		require(!spec.capped, 'ERR_CAPPED');
+		if (_cap == 0) {
+			_cap = spec.cursor;
+		}
 		require(_cap >= spec.count, 'ERR_CAP_LOW');
 		spec.count = _cap;
 		spec.capped = true;
@@ -255,13 +261,14 @@ contract CraftNFT {
 	// If the index is not the next sequential index in the batch, the token will be marked as sparse.
 	// Sparse tokens cannot thereafter be minted using mintFromBatchTo
 	// The method will fail if the token at the specified index has already been minted, or if the index is out of bounds of the batch.
-	// This method cannot be used to mint a unique token.
+	// This method cannot be used to mint a unique token or an unbounded token.
 	function mintExactFromBatchTo(address _recipient, bytes32 _content, uint16 _batch, uint48 _index) public returns (bytes32) {
 		tokenSpec storage spec;
 
 		spec = token[_content][_batch];
 		require(msg.sender == owner || writer[msg.sender], 'ERR_ACCESS');
 		require(spec.count > 0);
+		require(spec.capped);
 		require(_index < spec.count);
 		return mintBatchCore(_recipient, _content, _batch, _index, spec);
 	}
