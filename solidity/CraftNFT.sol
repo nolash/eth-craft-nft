@@ -16,6 +16,7 @@ contract CraftNFT {
 		uint48 count;
 		uint48 cursor;
 		bool sparse;
+		bool capped;
 	}
 
 	// The owner of the token contract.
@@ -74,7 +75,7 @@ contract CraftNFT {
 	// Minter
 	event Mint(address indexed _minter, address indexed _beneficiary, uint256 _value);
 
-	event Allocate(address indexed _minter, uint48 indexed _count, bytes32 _tokenId);
+	event Allocate(address indexed _minter, uint48 indexed _count, bool indexed _capped, bytes32 _tokenId);
 
 	constructor(string memory _name, string memory _symbol, bytes32 _declaration) {
 		owner = msg.sender;
@@ -142,9 +143,9 @@ contract CraftNFT {
 
 	// Allocate tokens for minting.
 	// if count is set to 0, only a single unique token can be minted.
-	function allocate(bytes32 content, uint48 count) public returns (bool) {
+	function allocate(bytes32 content, int48 count) public returns (bool) {
 		uint256 l;
-		require(msg.sender == owner || writer[msg.sender]);
+		require(msg.sender == owner || writer[msg.sender], 'ERR_ACCESS');
 		
 		tokenSpec memory _token;
 
@@ -153,16 +154,18 @@ contract CraftNFT {
 			require(token[content][0].count > 0);
 		}
 
-		_token.count = count;
+		if (count == 0) {
+			_token.capped = true;
+			supply += 1;	
+		} else if (count > 0) {
+			_token.count = uint48(count);
+			_token.capped = true;
+			supply += _token.count;
+		}
 		token[content].push(_token);
 		tokens.push(content);
 
-		if (count == 0) {
-			supply += 1;	
-		} else {
-			supply += count;
-		}
-		emit Allocate(msg.sender, count, content);
+		emit Allocate(msg.sender, _token.count, _token.capped, content);
 		return true;
 	}
 
@@ -212,6 +215,17 @@ contract CraftNFT {
 		mintedToken[_k] = bytes32(_data);
 	}
 
+	function setCap(bytes32 _content, uint16 _batch, uint48 _cap) public {
+		tokenSpec storage spec;
+
+		spec = token[_content][uint256(_batch)];
+		require(!spec.sparse, 'ERR_SPARSE');
+		require(!spec.capped, 'ERR_CAPPED');
+		require(_cap >= spec.count, 'ERR_CAP_LOW');
+		spec.count = _cap;
+		spec.capped = true;
+	}
+
 	// Mint a token from a batch.
 	// Will fail if:
 	// * All tokens in the batch have already been minted
@@ -225,12 +239,14 @@ contract CraftNFT {
 		spec = token[_content][uint256(_batch)];
 
 		require(!spec.sparse, 'ERR_SPARSE');
-		if (_batch == 0 && spec.count == 0) {
+		require(msg.sender == owner || writer[msg.sender], 'ERR_ACCESS');
+		if (_batch == 0 && spec.count == 0 && spec.capped) {
 			spec.cursor += 1;
 			return mintTo(_recipient, _content);
 		}
-		require(msg.sender == owner || writer[msg.sender], 'ERR_ACCESS');
-		require(spec.cursor < spec.count);
+		if (spec.capped) {
+			require(spec.cursor < spec.count);
+		}
 		return mintBatchCore(_recipient, _content, _batch, spec.cursor, spec);
 	}
 
@@ -275,6 +291,10 @@ contract CraftNFT {
 		right |= uint160(_recipient);
 
 		_spec.cursor += 1;
+		if (!_spec.capped) {
+			_spec.count += 1;
+			supply += 1;
+		}
 		mintedToken[k] = bytes32(right);
 
 		balance[_recipient] += 1;

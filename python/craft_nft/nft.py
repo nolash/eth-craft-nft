@@ -128,9 +128,12 @@ class CraftNFT(ERC721):
         enc = ABIContractEncoder()
         enc.method('allocate')
         enc.typ(ABIContractType.BYTES32)
-        enc.typ(ABIContractType.UINT48)
+        enc.typ_literal('int48')
         enc.bytes32(token_id)
-        enc.uintn(amount, 48)
+        if amount < 0:
+            enc.bytes32('ff' * 32)
+        else:
+            enc.uintn(amount, 48)
         data = enc.get()
         tx = self.template(sender_address, contract_address, use_nonce=True)
         tx = self.set_code(tx, data)
@@ -233,6 +236,22 @@ class CraftNFT(ERC721):
         enc.method('setBaseURL')
         enc.typ(ABIContractType.STRING)
         enc.string(url)
+        data = enc.get()
+        tx = self.template(sender_address, contract_address, use_nonce=True)
+        tx = self.set_code(tx, data)
+        tx = self.finalize(tx, tx_format)
+        return tx
+
+
+    def set_cap(self, contract_address, sender_address, token_id, batch, amount, tx_format=TxFormat.JSONRPC):
+        enc = ABIContractEncoder()
+        enc.method('setCap')
+        enc.typ(ABIContractType.BYTES32)
+        enc.typ(ABIContractType.UINT16)
+        enc.typ_literal('uint48')
+        enc.bytes32(token_id)
+        enc.uintn(batch, 16)
+        enc.uintn(amount, 48)
         data = enc.get()
         tx = self.template(sender_address, contract_address, use_nonce=True)
         tx = self.set_code(tx, data)
