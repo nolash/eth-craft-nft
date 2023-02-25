@@ -1,4 +1,5 @@
-div.pane {
+div.pane,
+div#runtime {
 	display: none;
 }
 

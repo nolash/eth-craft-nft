@@ -60,6 +60,8 @@ window.addEventListener('uistate', (e) => {
 			updateSettingsView('Voucher decimals', e.detail.settings.voucherDecimals);
 			document.getElementById("contract").style.display = "none";
 			document.getElementById("product").style.display = "block";
+			document.getElementById("setup").style.display = "none";
+			document.getElementById("runtime").style.display = "block";
 			break;
 		case STATE.MINT:
 			document.getElementById("scanTokenId").innerHTML = settings.tokenId;
@@ -82,14 +84,21 @@ window.addEventListener('uistate', (e) => {
 			window.stream.getTracks().forEach(track => track.stop());
 			break;
 		case STATE.SCAN_CONFIRM:
+			document.getElementById('scanAddress').value = e.detail.settings.recipient;
+			document.getElementById("scanManualMint").style.display = "none";
 			document.getElementById("scanConfirm").style.display = "none";
+			document.getElementById("scanAbort").style.display = "none";
+			document.getElementById("scanReturn").style.display = "block";
 			signAndSend();
 			break;
 		case STATE.SCAN_DONE:
 			document.getElementById("read").style.display = "none";
 			document.getElementById("product").style.display = "block";
-			document.getElementById("scanAbort").style.display = "none";
-			document.getElementById("scanReturn").style.display = "block";
+			document.getElementById("scanAddress").value = "";
+			const txList = document.getElementById("txList");
+			while (txList.lastChild !== null) {
+				txList.removeChild(txList.lastChild);
+			}
 			break;
 		case STATE.AIEE:
 			throw 'execution terminated';
@@ -202,24 +211,12 @@ function scan() {
 	const code = jsQR(imageData, 400, 400);
 	if (code) {
 		console.log("Found QR code", code);
-		let addr = code.data;
-		if (addr.length < 40) {
-			console.error('invalid ethereum address (too short)', addr);
+		try {
+			settings.recipient = checkAddress(code.data); 
+		} catch(e) {
+			console.error(e);
 			return;
 		}
-		if (addr.substring(0, 9) == "ethereum:") { // metamask qr
-			addr = addr.substring(9);
-		}
-		if (addr.substring(0, 2) == "0x") {
-			addr = addr.substring(2);
-		}
-		const re = new RegExp("^[0-9a-fA-F]{40}$");
-		const m = addr.match(re);
-		if (m === null) {
-			console.error('invalid ethereum address (invalid hex or too long)', addr);
-			return;
-		}
-		settings.recipient = addr;
 		const e = new CustomEvent('uistate', {
 			detail: {
 				delta: STATE.SCAN_RESULT,

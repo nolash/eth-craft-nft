@@ -76,6 +76,19 @@ window.addEventListener('load', () => {
 		window.dispatchEvent(e);
 		window.dispatchEvent(ee);
 	});
+	document.getElementById('scanReturn').addEventListener("click", (o) => {
+		const e = new CustomEvent('uistate', {
+			detail: {
+				delta: STATE.SCAN_DONE,
+				settings: settings,
+			},
+			bubbles: true,
+			cancelable: true,
+			composed: false,
+		});
+		window.dispatchEvent(e);
+	});
+
 	document.getElementById('scanConfirm').addEventListener("click", (o) => {
 		const e = new CustomEvent('uistate', {
 			detail: {
@@ -88,6 +101,11 @@ window.addEventListener('load', () => {
 		});
 		window.dispatchEvent(e);
 	});
+	document.getElementById('scanManualMint').addEventListener("click", (o) => {
+		const addr = document.getElementById("scanAddress").value;
+		manualConfirmHandler(addr);
+	});
+
 	setStatus('waiting for wallet', STATUS_BUSY);
 });
 
@@ -97,60 +115,64 @@ window.addEventListener('load', () => {
 		<dt>Status</dt>
 		<dd><span id="statusText" class="statusBusy">Initializing...</span></dd>
 	</dl>
-	<div class="pane" id="start">
-		<label for="keyFile">Keyfile JSON text</label>
-		<textarea cols="80" rows="24" id="keyFile"></textarea>
-		<label for="keyFilePassword">Keyfile passphrase</label>
-		<input type="password" id="keyFilePassword" />
-		<button id="keyFileSubmit">unlock wallet</button>
-	</div>
-	<div class="pane" id="connect">
-		<label for="chainRpcUrl">RPC URL</label>
-		<input type="text" id="chainRpcUrl" value="http://localhost:8545" />
-		<label for="chainId">Chain ID</label>
-		<input type="text" id="chainId" />
-		<label for="metaUrl">Data URL (optional)</label>
-		<input type="text" id="metaUrl" value="" /> 
-		<button id="chainSubmit">connect to network</button>
-	</div>
-	<div class="pane" id="contract">
-		<label for="contractAddress">NFT Contract address</label>
-		<input type="text" id="contractAddress" size="42" />
-		<label for="voucherAddress">Voucher address</label>
-		<input type="text" id="voucherAddress" size="42" />
-
-		<button id="contractSubmit">connect to contract</button>
-	</div>
-	<div class="pane" id="product">
-		<label for="requestTokenChooser">Choose NFT token</label>
-		<div id="tokenChooser"></div>
-		<label for="requestAmount">Choose mint amount</label>
-		<select id="requestAmount"></select>
-		<button id="requestSubmit">create request</button>
-	</div>
-	<div class="pane" id="read">
-		<h2>Mint token(s)</h2>
-		<dl>
-			<dt>Token Id</dt>
-			<dd id="scanTokenId"></dd>
-			<dt>Token Name</dt>
-			<dd id="scanTokenMetaName">(unavailable)</dd>
-			<dt>Token Description</dt>
-			<dd id="scanTokenMetaDescription">(unavailable)</dd>
-			<dt>Batch</dt>
-			<dd id="scanTokenBatch"></dd>
-			<dt>Amount</dt>
-			<dd id="scanTokenAmount"></dd>
-		</dl>
-		<div class="out">
-			<canvas id="qr-canvas" width="400" height="400"></canvas>
+	<div id="setup">
+		<div class="pane" id="start">
+			<label for="keyFile">Keyfile JSON text</label>
+			<textarea cols="80" rows="24" id="keyFile"></textarea>
+			<label for="keyFilePassword">Keyfile passphrase</label>
+			<input type="password" id="keyFilePassword" />
+			<button id="keyFileSubmit">unlock wallet</button>
 		</div>
-		<label for="scanAddress">Recipient address</label>
-		<input type="text" id="scanAddress" size="42" />
-		<ol id="txList"></ol>
-		<button id="scanManualMint">mint</button>
-		<button id="scanConfirm">confirm</button>
-		<button id="scanAbort">abort</button>
-		<button id="scanReturn">return</button>
+		<div class="pane" id="connect">
+			<label for="chainRpcUrl">RPC URL</label>
+			<input type="text" id="chainRpcUrl" value="http://localhost:8545" />
+			<label for="chainId">Chain ID</label>
+			<input type="text" id="chainId" />
+			<label for="metaUrl">Data URL (optional)</label>
+			<input type="text" id="metaUrl" value="" /> 
+			<button id="chainSubmit">connect to network</button>
+		</div>
+		<div class="pane" id="contract">
+			<label for="contractAddress">NFT Contract address</label>
+			<input type="text" id="contractAddress" size="42" />
+			<label for="voucherAddress">Voucher address</label>
+			<input type="text" id="voucherAddress" size="42" />
+
+			<button id="contractSubmit">connect to contract</button>
+		</div>
 	</div>
+	<div id="runtime">
+		<div class="pane" id="product">
+			<label for="requestTokenChooser">Choose NFT token</label>
+			<div id="tokenChooser"></div>
+			<label for="requestAmount">Choose mint amount</label>
+			<select id="requestAmount"></select>
+			<button id="requestSubmit">create request</button>
+		</div>
+		<div class="pane" id="read">
+			<h2>Mint token(s)</h2>
+			<dl>
+				<dt>Token Id</dt>
+				<dd id="scanTokenId"></dd>
+				<dt>Token Name</dt>
+				<dd id="scanTokenMetaName">(unavailable)</dd>
+				<dt>Token Description</dt>
+				<dd id="scanTokenMetaDescription">(unavailable)</dd>
+				<dt>Batch</dt>
+				<dd id="scanTokenBatch"></dd>
+				<dt>Amount</dt>
+				<dd id="scanTokenAmount"></dd>
+			</dl>
+			<div class="out">
+				<canvas id="qr-canvas" width="400" height="400"></canvas>
+			</div>
+			<label for="scanAddress">Recipient address</label>
+			<input type="text" id="scanAddress" size="42" />
+			<ol id="txList"></ol>
+			<button id="scanManualMint">mint</button>
+			<button id="scanConfirm">confirm</button>
+			<button id="scanAbort">abort</button>
+			<button id="scanReturn">return</button>
+		</div>
+	<div>
 </html>

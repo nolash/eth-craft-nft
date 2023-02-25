@@ -57,6 +57,25 @@ const txBaseERC20 = {
 	chainId: 5050,
 }
 
+function checkAddress(addr) {
+	if (addr.length < 40) {
+		console.error('invalid ethereum address (too short)', addr);
+		return;
+	}
+	if (addr.substring(0, 9) == "ethereum:") { // metamask qr
+		addr = addr.substring(9);
+	}
+	if (addr.substring(0, 2) == "0x") {
+		addr = addr.substring(2);
+	}
+	const re = new RegExp("^[0-9a-fA-F]{40}$");
+	const m = addr.match(re);
+	if (m === null) {
+		throw 'invalid ethereum address (invalid hex or too long): ' + addr;
+	}
+	return addr;
+}
+
 function checkState(stateCheck, exact) {
 	masked = state & stateCheck;
 	if (exact) {
@@ -165,14 +184,23 @@ async function keyFileHandler(v, passphrase) {
 async function chainHandler(rpc, chainId) {
 	setStatus('connecting to network', STATUS_BUSY);
 	setTimeout(async () => {
-		settings.provider = new ethers.providers.JsonRpcProvider("http://localhost:8545");
+		providerString = document.getElementById('chainRpcUrl').value;
+		settings.provider = new ethers.providers.JsonRpcProvider(providerString);
 		settings.wallet = settings.wallet.connect(settings.provider);
 		const network = await settings.provider.getNetwork();
 		console.debug('connected to network', network, settings.provider);
 		if (network.chainId != chainId) {
 			throw 'chainId mismatch, requested ' + chainId + ', got ' + network.chainId;
 		}
-		settings.chainId = chainId;
+		// TODO: get chainid for txbase from settings directly
+		settings.chainId = parseInt(chainId);
+		txBase.chainId = settings.chainId;
+		txBaseERC20.chainId = settings.chainId;
+
+		const gasPrice = await settings.provider.getGasPrice();
+		txBase.gasPrice = parseInt(gasPrice);
+		txBaseERC20.gasPrice = parseInt(gasPrice);
+
 		state |= STATE.CHAIN_SETTINGS;
 		const e = new CustomEvent('uistate', {
 			detail: {
@@ -356,6 +384,35 @@ async function scanTokenMetadata(tokenId) {
 	document.getElementById('scanTokenMetaDescription').innerHTML = o['description'];
 }
 
+async function manualConfirmHandler(addr) {
+	try {
+		settings.recipient = checkAddress(addr);
+	} catch(e) {
+		console.error(e);
+		return;
+	}
+	const e = new CustomEvent('uistate', {
+		detail: {
+			delta: STATE.SCAN_STOP,
+			settings: settings,
+		},
+		bubbles: true,
+		cancelable: true,
+		composed: false,
+	});
+	window.dispatchEvent(e);
+	const ee = new CustomEvent('uistate', {
+		detail: {
+			delta: STATE.SCAN_CONFIRM,
+			settings: settings,
+		},
+		bubbles: true,
+		cancelable: true,
+		composed: false,
+	});
+	window.dispatchEvent(ee);
+}
+
 async function requestHandler(tokenBatch, amount) {
 	const v = tokenBatch.split('.');
 	let batchNumberHex = "0000000000000000000000000000000000000000000000000000000000000000" + v[1].toString(16);
@@ -384,4 +441,3 @@ const nftAbi = [{"inputs":[{"internalType":"string","name":"_name","type":"strin
 
 
 const erc20Abi =  [{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"_owner","type":"address"},{"indexed":true,"internalType":"address","name":"_spender","type":"address"},{"indexed":false,"internalType":"uint256","name":"_value","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"_from","type":"address"},{"indexed":true,"internalType":"address","name":"_to","type":"address"},{"indexed":false,"internalType":"uint256","name":"_value","type":"uint256"}],"name":"Transfer","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"_from","type":"address"},{"indexed":true,"internalType":"address","name":"_to","type":"address"},{"indexed":true,"internalType":"address","name":"_spender","type":"address"},{"indexed":false,"internalType":"uint256","name":"_value","type":"uint256"}],"name":"TransferFrom","type":"event"},{"inputs":[{"internalType":"address","name":"_owner","type":"address"},{"internalType":"address","name":"_spender","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"_spender","type":"address"},{"internalType":"uint256","name":"_value","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_holder","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"decimals","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"_to","type":"address"},{"internalType":"uint256","name":"_value","type":"uint256"}],"name":"transfer","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_from","type":"address"},{"internalType":"address","name":"_to","type":"address"},{"internalType":"uint256","name":"_value","type":"uint256"}],"name":"transferFrom","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}];
-
