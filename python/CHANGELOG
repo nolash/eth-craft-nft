@@ -1,3 +1,7 @@
+- 0.0.4
+	* Remove obsolete CREATE argflag in publish script
+	* Implement multihash for contract content
+	* Add in-contract message capability
 - 0.0.3
 	* Implement chainlib-gen
 	* Apply fully qualified URL for tokenUri, with mutable base url

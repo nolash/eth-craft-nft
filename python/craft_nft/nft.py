@@ -246,8 +246,9 @@ class CraftNFT(ERC721):
         o['method'] = 'eth_call'
         enc = ABIContractEncoder()
         enc.method('toURI')
-        enc.typ(ABIContractType.BYTES32)
-        enc.bytes32(token_id)
+        #enc.typ(ABIContractType.BYTES32)
+        enc.typ(ABIContractType.BYTES)
+        enc.bytes(token_id)
         data = add_0x(enc.get())
         tx = self.template(sender_address, contract_address)
         tx = self.set_code(tx, data)
@@ -263,8 +264,8 @@ class CraftNFT(ERC721):
         o['method'] = 'eth_call'
         enc = ABIContractEncoder()
         enc.method('toURL')
-        enc.typ(ABIContractType.BYTES32)
-        enc.bytes32(token_id)
+        enc.typ(ABIContractType.BYTES)
+        enc.bytes(token_id)
         data = add_0x(enc.get())
         tx = self.template(sender_address, contract_address)
         tx = self.set_code(tx, data)
