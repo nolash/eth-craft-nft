@@ -1,0 +1,79 @@
+<html>
+	<head>
+		<title>qr list</title>
+<style type="text/css">
+#qrlist td {
+	font-size: 0.5em;	
+}
+th {
+	text-align: left;
+}
+</style>
+		<script>
+window.addEventListener('load', () => {
+	const v = localStorage.getItem("craftNftQr.act.serial");
+	const serialMax = parseInt(v);
+	const list = document.getElementById("qrlist");
+	for (let i = 0; i < serialMax; i++) {
+		const j = localStorage.getItem("craftNftQr.act." + i);
+		const o = JSON.parse(j);
+
+		let st = 'pending';
+		if (o > 0) {
+			st = 'success';
+		} else if (o < 0) {
+			st = 'failure';
+		}
+
+		const tr = document.createElement("tr");
+		if ((i % 2) > 0) {
+			tr.setAttribute("bgColor", "#eee");
+		}
+		let td = document.createElement("td");
+		td.innerHTML = i;
+		tr.appendChild(td);
+
+		td = document.createElement("td");
+		td.innerHTML = o.recipient;
+		tr.appendChild(td);
+
+		td = document.createElement("td");
+		td.innerHTML = o.tokenId;
+		tr.appendChild(td);
+
+		td = document.createElement("td");
+		td.innerHTML = o.voucherValue;
+		tr.appendChild(td);
+
+		td = document.createElement("td");
+		td.innerHTML = st;
+		tr.appendChild(td);
+
+		td = document.createElement("td");
+		td.innerHTML = new Date(o.dateCreated);
+		tr.appendChild(td);
+
+		td = document.createElement("td");
+		td.innerHTML = new Date(o.dateUpdated);
+		tr.appendChild(td);
+
+		list.appendChild(tr);
+	}
+});
+		</script>
+	</head>
+	<body>
+	<table id="qrlist">
+		<tr>
+			<th>serial</th>
+			<th>recipient</th>
+			<th>tokenId</th>
+			<th>value</th>
+			<th>status</th>
+			<th>created</th>
+			<th>updated</th>
+		</tr>
+	</table>
+	</body>
+</html>
+	

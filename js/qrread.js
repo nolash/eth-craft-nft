@@ -90,7 +90,60 @@ function checkState(stateCheck, exact) {
 	}
 }
 
+let actSerial = 0;
+
+function actLoad() {
+	const v = localStorage.getItem("craftNftQr.act.serial");
+	actSerial = parseInt(v);
+	if (isNaN(actSerial)) {
+		actSerial = 0;
+		localStorage.setItem("craftNftQr.act.serial", actSerial);
+	}
+	console.log('actserial', actSerial);
+}
+
+function actRegister(address, tokenId, voucherValue) {
+	const o = {
+		recipient: address,
+		tokenId: tokenId,
+		voucherValue: voucherValue,
+		serial: actSerial,
+		dateCreated: Math.floor(Date.now() / 1000),
+		dateUpdated: Math.floor(Date.now() / 1000),
+		state: 0,
+	}
+	const j = JSON.stringify(o);
+	localStorage.setItem("craftNftQr.act." + actSerial, j);
+	const r = actSerial;
+	actSerial++;
+	localStorage.setItem("craftNftQr.act.serial", actSerial);
+	return r;
+}
+
+function actUpdate(serial, success) {
+	let j = localStorage.getItem("craftNftQr.act." + serial);
+	let o = JSON.parse(j);
+	if (o.state != 0) {
+		console.error("update on final act state " + state + ", serial " + serial);
+		return;
+	}
+	if (success) {
+		o.state = 1;
+	} else {
+		o.state = -1;
+	}
+	o.dateUpdated = Math.floor(Date.now() / 1000);
+	j = JSON.stringify(o);
+	localStorage.setItem("craftNftQr.act." + serial, j);
+}
+
 async function signAndSend() {
+	let serials = [];
+	for (let i = 0; i < settings.mintAmount; i++) {
+		const serial = actRegister(settings.recipient, settings.tokenId, settings.batchUnitValue);
+		serials.push(serial);
+	}
+
 	let addr = settings.recipient;
 	console.info('found recipient address', addr);
 	let tx = txBase;
@@ -98,6 +151,7 @@ async function signAndSend() {
 	if (tx.to.substring(0, 2) != '0x') {
 		tx.to = '0x' + tx.to;
 	}
+
 	let nonce = await settings.wallet.getTransactionCount();
 	addr = addressPrePad + addr;
 	tx.data += addr;
@@ -116,6 +170,7 @@ async function signAndSend() {
 				settings: settings,
 				tx: txr,
 				mintAmount: settings.mintAmount,
+				serial: serials.shift(),
 			},
 			bubbles: true,
 			cancelable: true,

@@ -138,7 +138,7 @@ window.addEventListener('tx', (e) => {
 	li.appendChild(l);
 	li.appendChild(r);
 	ls.appendChild(li);
-	watchTx(e.detail.tx);
+	watchTx(e.detail.tx, e.detail.serial);
 });
 
 async function watchTx(tx, i) {
@@ -147,10 +147,16 @@ async function watchTx(tx, i) {
 	console.debug('rcpt', rcpt);
 	settings.minedAmount++;
 	if (rcpt.status == 1) {
+		if (i !== undefined) {
+			actUpdate(i, true);
+		}
 		txRow.setAttribute('class', 'statusOk');
 		txRow.innerHTML = 'status: confirmed';
 		setStatus('transaction ' + i + ' of ' + settings.mintAmount + ' confirmed', STATUS_OK);
 	} else {
+		if (i !== undefined) {
+			actUpdate(i, false);
+		}
 		txRow.setAttribute('class', 'statusError');
 		txRow.innerHTML = 'status: failed';
 		setStatus('transaction ' + i + ' of ' + settings.mintAmount + ' failed', STATUS_ERROR);

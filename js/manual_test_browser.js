@@ -100,7 +100,7 @@ async function generateAllocation() {
 	}
 
 	tokenData = Object.assign(tokenData_ERC721, tokenData_native, tokenData_openSea);
-	const s = JSON.stringify(tokenData_ERC721);
+	const s = JSON.stringify(tokenData);
 
 	const sha_raw = new jsSHA("SHA-256", "TEXT", { encoding: "UTF8" });
 	sha_raw.update(s);
