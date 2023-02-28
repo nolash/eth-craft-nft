@@ -32,6 +32,7 @@ from chainlib.eth.contract import ABIContractType
 
 # local imports
 from craft_nft import CraftNFT
+from craft_nft.unittest import TestCraftNFT
 from craft_nft.error import InvalidBatchError
 
 logging.basicConfig(level=logging.DEBUG)
@@ -43,22 +44,8 @@ hash_of_foo = '2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae'
 hash_of_bar = 'fcde2b2edba56bf408601fb721fe9b5c338d10ee429ea04fae5511b68fbf8fb9'
 
 
-class Test(EthTesterCase):
-
-    def setUp(self):
-        super(Test, self).setUp()
-        nonce_oracle = RPCNonceOracle(self.accounts[0], self.rpc)
-        c = CraftNFT(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
-        (tx_hash, o) = c.constructor(self.accounts[0], 'DevBadge', 'DEV')
-        self.conn = RPCConnection.connect(self.chain_spec, 'default')
-        r = self.conn.do(o)
-        logg.debug('deployed with hash {}'.format(r))
-        
-        o = receipt(r)
-        r = self.conn.do(o)
-        self.address = to_checksum_address(r['contract_address'])
-
-
+class TestSpec(TestCraftNFT):
+    
     def test_allocate_mint_spec(self):
         nonce_oracle = RPCNonceOracle(self.accounts[0], self.rpc)
         c = CraftNFT(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)

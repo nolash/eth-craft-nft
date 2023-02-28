@@ -107,12 +107,8 @@ contract CraftNFT {
 	// Transfer ownership of token contract to new owner.
 	//
 	// If _final is true, future ownership transfers will not be permitted.
-	function transferOwnership(address _newOwner, bool _final) public returns(bool) {
+	function transferOwnership(address _newOwner) public returns(bool) {
 		require(msg.sender == owner);
-		require(!ownerFinal);
-		if (_final) {
-			ownerFinal = true;
-		}
 		owner = _newOwner;
 		return true;
 	}
