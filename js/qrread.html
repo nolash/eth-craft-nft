@@ -13,14 +13,14 @@ const MAX_MINT = 4;
 const BATCH_UNIT_VALUE = 500;
 
 window.addEventListener('load', () => {
-	settings.batchUnitValue = BATCH_UNIT_VALUE;
+//	settings.batchUnitValue = BATCH_UNIT_VALUE;
 	actLoad();
-	for (let i = 1; i <= MAX_MINT; i<<=1) {
-		const opt = document.createElement('option');
-		opt.setAttribute('value', i);
-		opt.innerHTML = i.toString();
-		document.getElementById('requestAmount').appendChild(opt);
-	}
+//	for (let i = 1; i <= MAX_MINT; i<<=1) {
+//		const opt = document.createElement('option');
+//		opt.setAttribute('value', i);
+//		opt.innerHTML = i.toString();
+//		document.getElementById('requestAmount').appendChild(opt);
+//	}
 	document.getElementById('keyFileSubmit').addEventListener("click", (o) => {
 		const keyFile = document.getElementById("keyFile").value;
 		const keyFilePassword = document.getElementById("keyFilePassword").value;
@@ -147,7 +147,7 @@ window.addEventListener('load', () => {
 			<label for="requestTokenChooser">Choose NFT token</label>
 			<div id="tokenChooser"></div>
 			<label for="requestAmount">Choose mint amount</label>
-			<select id="requestAmount"></select>
+			<input type="text" id="requestAmount"></input>
 			<button id="requestSubmit">create request</button>
 		</div>
 		<div class="pane" id="read">
@@ -161,8 +161,10 @@ window.addEventListener('load', () => {
 				<dd id="scanTokenMetaDescription">(unavailable)</dd>
 				<dt>Batch</dt>
 				<dd id="scanTokenBatch"></dd>
-				<dt>Amount</dt>
+				<dt>NFT units</dt>
 				<dd id="scanTokenAmount"></dd>
+				<dt>Voucher amount</dt>
+				<dd id="scanVoucherAmount"></dd>
 			</dl>
 			<div class="out">
 				<canvas id="qr-canvas" width="400" height="400"></canvas>

@@ -35,6 +35,7 @@ var settings = {
 	voucherSymbol: undefined,
 	voucherDecimals: undefined,
 	voucherExpire: undefined,
+	voucherTransferAmount: 0,
 };
 
 const txBase = {
@@ -181,7 +182,7 @@ async function signAndSend() {
 		nonce++;
 	}
 
-	const value = (settings.mintAmount * settings.batchUnitValue) * (10 ** settings.voucherDecimals);
+	const value = settings.voucherTransferAmount; 
 	setStatus('signing and sending fungible token transaction of value ' + value + '...', STATUS_BUSY);
 	let txVoucher = txBaseERC20;
 	txVoucher.to = settings.voucherAddress;
@@ -478,7 +479,10 @@ async function requestHandler(tokenBatch, amount) {
 	settings.dataPost = tokenId + batchNumberHex;
 	settings.tokenId = tokenId;
 	settings.batchNumber = v[1];
-	settings.mintAmount = amount;
+	//settings.mintAmount = amount;
+	settings.mintAmount = 1;
+	//settings.voucherTransferAmount = (settings.mintAmount * settings.batchUnitValue) * (10 ** settings.voucherDecimals);
+	settings.voucherTransferAmount = amount * (10 ** settings.voucherDecimals);
 	const e = new CustomEvent('uistate', {
 		detail: {
 			delta: STATE.MINT,
