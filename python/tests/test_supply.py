@@ -55,8 +55,16 @@ class TestSupply(TestCraftNFT):
         o = c.total_supply(self.address, sender_address=self.accounts[0])
         r = self.rpc.do(o)
         supply = c.parse_total_supply(r)
+        self.assertEqual(supply, 0);
+      
+        (tx_hash_hex, o) = c.mint_to(self.address, self.accounts[0], self.accounts[1], hash_of_foo)
+        self.rpc.do(o)  
+
+        o = c.total_supply(self.address, sender_address=self.accounts[0])
+        r = self.rpc.do(o)
+        supply = c.parse_total_supply(r)
         self.assertEqual(supply, 1);
-        
+
     
     def test_supply_batch(self):
         nonce_oracle = RPCNonceOracle(self.accounts[0], self.rpc)
@@ -68,8 +76,15 @@ class TestSupply(TestCraftNFT):
         o = c.total_supply(self.address, sender_address=self.accounts[0])
         r = self.rpc.do(o)
         supply = c.parse_total_supply(r)
-        self.assertEqual(supply, 9);
+        self.assertEqual(supply, 0);
      
+        (tx_hash_hex, o) = c.mint_to(self.address, self.accounts[0], self.accounts[1], hash_of_foo)
+        self.rpc.do(o)
+
+        o = c.total_supply(self.address, sender_address=self.accounts[0])
+        r = self.rpc.do(o)
+        supply = c.parse_total_supply(r)
+        self.assertEqual(supply, 1);
 
 
     def test_supply_mixed(self):
@@ -88,7 +103,21 @@ class TestSupply(TestCraftNFT):
         o = c.total_supply(self.address, sender_address=self.accounts[0])
         r = self.rpc.do(o)
         supply = c.parse_total_supply(r)
-        self.assertEqual(supply, 16);
+        self.assertEqual(supply, 0);
+
+        (tx_hash_hex, o) = c.mint_to(self.address, self.accounts[0], self.accounts[3], hash_of_bar)
+        self.rpc.do(o)
+
+        (tx_hash_hex, o) = c.mint_to(self.address, self.accounts[0], self.accounts[2], hash_of_bar)
+        self.rpc.do(o)
+
+        (tx_hash_hex, o) = c.mint_to(self.address, self.accounts[0], self.accounts[1], hash_of_foo)
+        self.rpc.do(o)
+
+        o = c.total_supply(self.address, sender_address=self.accounts[0])
+        r = self.rpc.do(o)
+        supply = c.parse_total_supply(r)
+        self.assertEqual(supply, 3);
 
 
 if __name__ == '__main__':

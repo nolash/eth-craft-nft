@@ -105,21 +105,22 @@ class CraftNFT(ERC721):
         return 4000000
 
 
-    def constructor(self, sender_address, name, symbol, declaration=ZERO_CONTENT, tx_format=TxFormat.JSONRPC, version=None):
-        code = self.cargs(name, symbol, declaration, version=version)
+    def constructor(self, sender_address, name, symbol, declaration=ZERO_CONTENT, enumeration=False, tx_format=TxFormat.JSONRPC, version=None):
+        code = self.cargs(name, symbol, declaration, enumeration, version=version)
         tx = self.template(sender_address, None, use_nonce=True)
         tx = self.set_code(tx, code)
         return self.finalize(tx, tx_format)
 
 
     @staticmethod
-    def cargs(name, symbol, declaration, version=None):
+    def cargs(name, symbol, declaration, enumeration, version=None):
         declaration = strip_0x(declaration)
         code = CraftNFT.bytecode()
         enc = ABIContractEncoder()
         enc.string(name)
         enc.string(symbol)
         enc.bytes32(declaration)
+        enc.bool(enumeration)
         code += enc.get()
         return code
 
@@ -292,7 +293,7 @@ class CraftNFT(ERC721):
         return o
 
 
-    def mint_to(self, contract_address, sender_address, recipient, token_id, batch, index=None, tx_format=TxFormat.JSONRPC):
+    def mint_to(self, contract_address, sender_address, recipient, token_id, batch=0, index=None, tx_format=TxFormat.JSONRPC):
         enc = ABIContractEncoder()
 
         if index != None:

@@ -37,6 +37,10 @@ contract CraftNFT {
 	// All Minted Tokens.
 	// Represents both Unique Tokens and Batch Tokens.
 	mapping(bytes32 => bytes32) public mintedToken;
+	// Activate enumeration
+	bool enumeration;
+	// ERC721 - Enumerable - List of tokens in order of minting
+	uint256[] public tokenByIndex;
 
 	// Registry for the approve() method
 	mapping(uint256 => address) tokenAllowance;
@@ -51,7 +55,7 @@ contract CraftNFT {
 	string public symbol;
 
 	// The total Token Allocations across all tokens, regardless of whether they have been minted or not.
-	uint256 supply;
+	//uint256 supply;
 
 	// The digest of a human-readable resource that describes the rationale and terms for all tokens created by this contract.
 	bytes32 public declaration;
@@ -59,7 +63,9 @@ contract CraftNFT {
 	// Editable base URI against which to look up token data by token id
 	bytes public baseURL;
 
-	// Balance
+	// Enumerated index of all owned tokens
+	mapping ( address => mapping ( uint256 => uint256 ) ) public tokenOfOwnerByIndex;
+	mapping ( uint256 => uint256 ) ownerIndexReverse;
 	mapping ( address => uint256 ) balance;
 
 	// ERC-721
@@ -94,7 +100,7 @@ contract CraftNFT {
 
 	event Msg(bytes _multiHash);
 
-	constructor(string memory _name, string memory _symbol, bytes32 _declaration) {
+	constructor(string memory _name, string memory _symbol, bytes32 _declaration, bool _enumeration) {
 		owner = msg.sender;
 		declaration =_declaration;
 		name = _name;
@@ -102,6 +108,7 @@ contract CraftNFT {
 		addCodec(32, 0x12, "sha256");
 		setMsgCodec(0x12);
 		currentMsg = new bytes(32);
+		enumeration = _enumeration;
 	}
 
 	// Transfer ownership of token contract to new owner.
@@ -174,11 +181,11 @@ contract CraftNFT {
 		token[content].push(_token);
 		tokens.push(content);
 
-		if (count == 0) {
-			supply += 1;	
-		} else {
-			supply += count;
-		}
+//		if (count == 0) {
+//			supply += 1;	
+//		} else {
+//			supply += count;
+//		}
 		emit Allocate(msg.sender, count, content);
 		return true;
 	}
@@ -197,6 +204,8 @@ contract CraftNFT {
 	// Mint a unique token. The method will fail if the token was allocated as a batch.
 	function mintTo(address _recipient, bytes32 _content) public returns (bytes32) {
 		uint256 right;
+		uint256 tokenId;
+		uint256 _balance;
 		
 		require(msg.sender == owner || writer[msg.sender]);
 		require(token[_content].length == 1);
@@ -206,10 +215,17 @@ contract CraftNFT {
 		right = uint160(_recipient);
 		right |= (3 << 254);
 		mintedToken[_content] = bytes32(right);
-
+		
+		tokenId = uint256(_content);
+		if (enumeration) {
+			_balance = balance[_recipient];
+			ownerIndexReverse[tokenId] = _balance;
+			tokenOfOwnerByIndex[_recipient][_balance] = tokenId;
+		}
 		balance[_recipient] += 1;
+		tokenByIndex.push(uint256(_content));
 
-		emit Mint(msg.sender, _recipient, uint256(_content));
+		emit Mint(msg.sender, _recipient, tokenId);
 
 		return _content;
 	}
@@ -272,6 +288,7 @@ contract CraftNFT {
 		uint256 left;
 		uint256 right;
 		bytes32 k;
+		uint256 _balance;
 	
 		left = uint256(_content) & 0xffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000;
 		left |= ((_batch & 0xffffffffffffffff) << 48);
@@ -294,7 +311,14 @@ contract CraftNFT {
 		_spec.cursor += 1;
 		mintedToken[k] = bytes32(right);
 
+		if (enumeration) {
+			_balance = balance[_recipient];
+			ownerIndexReverse[left] = _balance;
+			tokenOfOwnerByIndex[_recipient][_balance] = left;
+		}
+
 		balance[_recipient] += 1;
+		tokenByIndex.push(left);
 
 		emit Mint(msg.sender, _recipient, left);
 
@@ -339,6 +363,7 @@ contract CraftNFT {
 	// Common code path for transfer methods
 	function transferCore(address _from, address _to, uint256 _tokenId) internal {
 		address currentTokenOwner;
+		uint256 reverseIndex;
 
 		currentTokenOwner = this.ownerOf(_tokenId);
 
@@ -349,6 +374,8 @@ contract CraftNFT {
 		
 		tokenAllowance[_tokenId] = address(0);
 		setTokenOwner(_tokenId, _to);
+		reverseIndex = ownerIndexReverse[_tokenId];
+		tokenOfOwnerByIndex[_from][reverseIndex] = uint256(0);
 
 		balance[_from] -= 1;
 		balance[_to] += 1;
@@ -482,7 +509,7 @@ contract CraftNFT {
 
 	// ERC-721
 	function totalSupply() public view returns(uint256) {
-		return supply;
+		return tokenByIndex.length;
 	}
 
 	// Add a multicodec that can later be set as current codec
