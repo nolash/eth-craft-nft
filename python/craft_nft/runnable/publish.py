@@ -66,7 +66,7 @@ flags = arg_flags.STD_WRITE | arg_flags.WALLET | arg_flags.VALUE | arg_flags.TAB
 argparser = chainlib.eth.cli.ArgumentParser()
 argparser.add_argument('--name', type=str, required=True, help='Token name')
 argparser.add_argument('--symbol', type=str, required=True, help='Token symbol')
-argparser.add_argument('--declaration-file', dest='declaration_file', type=str, help='File describing the purpose and terms of the token')
+#argparser.add_argument('--declaration-file', dest='declaration_file', type=str, help='File describing the purpose and terms of the token')
 argparser = process_args(argparser, arg, flags)
 args = argparser.parse_args(sys.argv[1:])
 

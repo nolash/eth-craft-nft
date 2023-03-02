@@ -51,7 +51,6 @@ $ pip install $REPO_ROOT/dist/craft-nft-x.x.x.tar.gz
 craftnft-publish \
     --name <token name> \
     --symbol <token symbol> \
-    --declaration-file <path to human readable file describing the token contract> \
     -p <evm rpc node provider> \
     -s -w
 ```
@@ -96,7 +95,7 @@ export DAVE=$(eth-keyfile -z -d dave.json)
 # publish contract
 >&2 echo publishing token ...
 echo "description missing" > description.txt
-craftnft-publish --name "Test Token" --symbol "TEST" --declaration-file description.txt -s -w > token.txt
+craftnft-publish --name "Test Token" --symbol "TEST" -s -w > token.txt
 export TOKEN_ADDRESS=$(cat token.txt | eth-checksum)
 >&2 echo published token $TOKEN_ADDRESS
 
@@ -193,8 +192,7 @@ For the example browser application to use the service, the `wala` url needs to 
 
 The data in content-addressed storage used by the application is:
 
-* The contract declaration (read)
-* Token declarations (read/write)
+* Token metadata (read/write)
 
 See the `$REPO_ROOT/doc/latex/terminology.latex` document for a terminology overview.
 
