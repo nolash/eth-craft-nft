@@ -335,15 +335,15 @@ async function run(w3, generated_session) {
 		return false;
 	});
 
-	if (session.contentGateway !== undefined) {
-		declarationUrl = session.contentGateway.url(session.declarationHash);
-		let a = document.createElement('a')
-		a.setAttribute('href', declarationUrl);
-		a.innerHTML = declarationUrl;
-		document.getElementById('data_declaration').appendChild(a);
-	} else {
-		document.getElementById('data_declaration').innerHTML = 'sha256:' + session.declarationHash;
-	}
+//	if (session.contentGateway !== undefined) {
+//		declarationUrl = session.contentGateway.url(session.declarationHash);
+//		let a = document.createElement('a')
+//		a.setAttribute('href', declarationUrl);
+//		a.innerHTML = declarationUrl;
+//		document.getElementById('data_declaration').appendChild(a);
+//	} else {
+//		document.getElementById('data_declaration').innerHTML = 'sha256:' + session.declarationHash;
+//	}
 
 	window.craftnft.getTokens(w3, session, (tokenId) => {
 		if (tokenId.substring(0, 2) == '0x') {

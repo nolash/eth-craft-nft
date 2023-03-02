@@ -210,6 +210,9 @@ class Test(TestCraftNFT):
         expected_id = hash_of_foo[:64-16] + '0000000000000000'
         o = c.get_token(self.address, expected_id, sender_address=self.accounts[0])
         r = self.rpc.do(o)
+        o = receipt(tx_hash_hex)
+        r = self.conn.do(o)
+        self.assertEqual(r['status'], 1)
 
         o = c.owner_of(self.address, int(expected_id, 16), sender_address=self.accounts[0])
         r = self.rpc.do(o) 
@@ -515,6 +518,78 @@ class Test(TestCraftNFT):
         r = self.rpc.do(o)
         balance = c.parse_balance(r)
         self.assertEqual(balance, 1)
+
+
+    def test_mint_uncapped(self):
+        nonce_oracle = RPCNonceOracle(self.accounts[0], self.rpc)
+        c = CraftNFT(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
+
+        (tx_hash_hex, o) = c.allocate(self.address, self.accounts[0], hash_of_foo, amount=-1)
+        self.rpc.do(o)
+        o = receipt(tx_hash_hex)
+        r = self.conn.do(o)
+        self.assertEqual(r['status'], 1)
+
+        for i in range(5):
+            (tx_hash_hex, o) = c.mint_to(self.address, self.accounts[0], self.accounts[1+i], hash_of_foo, 0)
+            self.rpc.do(o)
+            o = receipt(tx_hash_hex)
+            r = self.conn.do(o)
+            self.assertEqual(r['status'], 1)
+ 
+        (tx_hash_hex, o) = c.set_cap(self.address, self.accounts[0], hash_of_foo, 0, 4)
+        self.rpc.do(o)
+        o = receipt(tx_hash_hex)
+        r = self.conn.do(o)
+        self.assertEqual(r['status'], 0)
+
+        (tx_hash_hex, o) = c.set_cap(self.address, self.accounts[0], hash_of_foo, 0, 6)
+        self.rpc.do(o)
+        o = receipt(tx_hash_hex)
+        r = self.conn.do(o)
+        self.assertEqual(r['status'], 1)
+
+        (tx_hash_hex, o) = c.mint_to(self.address, self.accounts[0], self.accounts[1+i], hash_of_foo, 0)
+        self.rpc.do(o)
+        o = receipt(tx_hash_hex)
+        r = self.conn.do(o)
+        self.assertEqual(r['status'], 1)
+
+        (tx_hash_hex, o) = c.mint_to(self.address, self.accounts[0], self.accounts[2], hash_of_foo, 0)
+        self.rpc.do(o)
+        o = receipt(tx_hash_hex)
+        r = self.conn.do(o)
+        self.assertEqual(r['status'], 0)
+        
+
+    def test_mint_cap_immediate(self):
+        nonce_oracle = RPCNonceOracle(self.accounts[0], self.rpc)
+        c = CraftNFT(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
+
+        (tx_hash_hex, o) = c.allocate(self.address, self.accounts[0], hash_of_foo, amount=-1)
+        self.rpc.do(o)
+        o = receipt(tx_hash_hex)
+        r = self.conn.do(o)
+        self.assertEqual(r['status'], 1)
+
+        for i in range(3):
+            (tx_hash_hex, o) = c.mint_to(self.address, self.accounts[0], self.accounts[1+i], hash_of_foo, 0)
+            self.rpc.do(o)
+            o = receipt(tx_hash_hex)
+            r = self.conn.do(o)
+            self.assertEqual(r['status'], 1)
+ 
+        (tx_hash_hex, o) = c.set_cap(self.address, self.accounts[0], hash_of_foo, 0, 0)
+        self.rpc.do(o)
+        o = receipt(tx_hash_hex)
+        r = self.conn.do(o)
+        self.assertEqual(r['status'], 1)
+
+        (tx_hash_hex, o) = c.mint_to(self.address, self.accounts[0], self.accounts[2], hash_of_foo, 0)
+        self.rpc.do(o)
+        o = receipt(tx_hash_hex)
+        r = self.conn.do(o)
+        self.assertEqual(r['status'], 0)
 
 
 if __name__ == '__main__':

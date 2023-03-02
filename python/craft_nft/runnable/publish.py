@@ -99,7 +99,8 @@ def main():
             settings.get('SENDER_ADDRESS'),
             token_name,
             token_symbol,
-            token_declaration,
+            #token_declaration,
+            #enumeration=True,
             )
     if config.get('_RPC_SEND'):
         conn.do(o)

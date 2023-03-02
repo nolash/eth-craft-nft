@@ -55,10 +55,10 @@ async function startSession(w3, config, session, runner) {
 	session.name = await session.contract.methods.name().call({from: session.account});
 	session.symbol = await session.contract.methods.symbol().call({from: session.account});
 	session.supply = await session.contract.methods.totalSupply().call({from: session.account});
-	session.declarationHash = await session.contract.methods.declaration().call({from: session.account});
-	if (session.declarationHash.substring(0,2) == '0x') {
-		session.declarationHash = session.declarationHash.substring(2);
-	}
+	//session.declarationHash = await session.contract.methods.declaration().call({from: session.account});
+	//if (session.declarationHash.substring(0,2) == '0x') {
+	//	session.declarationHash = session.declarationHash.substring(2);
+	//}
 	runner(w3, session);
 }
 

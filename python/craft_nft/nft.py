@@ -105,22 +105,22 @@ class CraftNFT(ERC721):
         return 4000000
 
 
-    def constructor(self, sender_address, name, symbol, declaration=ZERO_CONTENT, enumeration=False, tx_format=TxFormat.JSONRPC, version=None):
-        code = self.cargs(name, symbol, declaration, enumeration, version=version)
+    #def constructor(self, sender_address, name, symbol, declaration=ZERO_CONTENT, enumeration=False, tx_format=TxFormat.JSONRPC, version=None):
+    def constructor(self, sender_address, name, symbol, tx_format=TxFormat.JSONRPC, version=None):
+        #code = self.cargs(name, symbol, declaration, enumeration, version=version)
+        code = self.cargs(name, symbol, version=version)
         tx = self.template(sender_address, None, use_nonce=True)
         tx = self.set_code(tx, code)
         return self.finalize(tx, tx_format)
 
 
     @staticmethod
-    def cargs(name, symbol, declaration, enumeration, version=None):
-        declaration = strip_0x(declaration)
+    #def cargs(name, symbol, declaration, enumeration, version=None):
+    def cargs(name, symbol, version=None):
         code = CraftNFT.bytecode()
         enc = ABIContractEncoder()
         enc.string(name)
         enc.string(symbol)
-        enc.bytes32(declaration)
-        enc.bool(enumeration)
         code += enc.get()
         return code
 
@@ -129,9 +129,12 @@ class CraftNFT(ERC721):
         enc = ABIContractEncoder()
         enc.method('allocate')
         enc.typ(ABIContractType.BYTES32)
-        enc.typ(ABIContractType.UINT48)
+        enc.typ_literal('int48')
         enc.bytes32(token_id)
-        enc.uintn(amount, 48)
+        if amount < 0:
+            enc.bytes32('ff' * 32)
+        else:
+            enc.uintn(amount, 48)
         data = enc.get()
         tx = self.template(sender_address, contract_address, use_nonce=True)
         tx = self.set_code(tx, data)
@@ -234,6 +237,22 @@ class CraftNFT(ERC721):
         enc.method('setBaseURL')
         enc.typ(ABIContractType.STRING)
         enc.string(url)
+        data = enc.get()
+        tx = self.template(sender_address, contract_address, use_nonce=True)
+        tx = self.set_code(tx, data)
+        tx = self.finalize(tx, tx_format)
+        return tx
+
+
+    def set_cap(self, contract_address, sender_address, token_id, batch, amount, tx_format=TxFormat.JSONRPC):
+        enc = ABIContractEncoder()
+        enc.method('setCap')
+        enc.typ(ABIContractType.BYTES32)
+        enc.typ(ABIContractType.UINT16)
+        enc.typ_literal('uint48')
+        enc.bytes32(token_id)
+        enc.uintn(batch, 16)
+        enc.uintn(amount, 48)
         data = enc.get()
         tx = self.template(sender_address, contract_address, use_nonce=True)
         tx = self.set_code(tx, data)

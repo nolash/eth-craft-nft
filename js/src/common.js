@@ -12,7 +12,7 @@ var session = {
 	contract: undefined,
 	name: undefined,
 	symbol: undefined,
-	declarationHash: undefined,
+	//declarationHash: undefined,
 	contentGatewayUrl: undefined,
 	contentGateway: undefined,
 	supply: 0,

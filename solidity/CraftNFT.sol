@@ -16,6 +16,7 @@ contract CraftNFT {
 		uint48 count;
 		uint48 cursor;
 		bool sparse;
+		bool capped;
 	}
 
 	// The owner of the token contract.
@@ -37,8 +38,6 @@ contract CraftNFT {
 	// All Minted Tokens.
 	// Represents both Unique Tokens and Batch Tokens.
 	mapping(bytes32 => bytes32) public mintedToken;
-	// Activate enumeration
-	bool enumeration;
 	// ERC721 - Enumerable - List of tokens in order of minting
 	uint256[] public tokenByIndex;
 
@@ -58,7 +57,7 @@ contract CraftNFT {
 	//uint256 supply;
 
 	// The digest of a human-readable resource that describes the rationale and terms for all tokens created by this contract.
-	bytes32 public declaration;
+	//bytes32 public declaration;
 
 	// Editable base URI against which to look up token data by token id
 	bytes public baseURL;
@@ -80,8 +79,7 @@ contract CraftNFT {
 	// Minter
 	event Mint(address indexed _minter, address indexed _beneficiary, uint256 _value);
 
-	// Batcher
-	event Allocate(address indexed _minter, uint48 indexed _count, bytes32 _tokenId);
+	event Allocate(address indexed _minter, uint48 indexed _count, bool indexed _capped, bytes32 _tokenId);
 
 	// Content hashes
 	// Represents a multicodec item
@@ -100,15 +98,13 @@ contract CraftNFT {
 
 	event Msg(bytes _multiHash);
 
-	constructor(string memory _name, string memory _symbol, bytes32 _declaration, bool _enumeration) {
+	constructor(string memory _name, string memory _symbol) {
 		owner = msg.sender;
-		declaration =_declaration;
 		name = _name;
 		symbol = _symbol;
 		addCodec(32, 0x12, "sha256");
 		setMsgCodec(0x12);
 		currentMsg = new bytes(32);
-		enumeration = _enumeration;
 	}
 
 	// Transfer ownership of token contract to new owner.
@@ -166,9 +162,10 @@ contract CraftNFT {
 
 	// Allocate tokens for minting.
 	// if count is set to 0, only a single unique token can be minted.
-	function allocate(bytes32 content, uint48 count) public returns (bool) {
+	// if count is set a negative number, the token will be unbounded (may be capped later with setCap).
+	function allocate(bytes32 content, int48 count) public returns (bool) {
 		uint256 l;
-		require(msg.sender == owner || writer[msg.sender]);
+		require(msg.sender == owner || writer[msg.sender], 'ERR_ACCESS');
 		
 		tokenSpec memory _token;
 
@@ -177,16 +174,16 @@ contract CraftNFT {
 			require(token[content][0].count > 0);
 		}
 
-		_token.count = count;
+		if (count == 0) {
+			_token.capped = true;
+		} else if (count > 0) {
+			_token.count = uint48(count);
+			_token.capped = true;
+		}
 		token[content].push(_token);
 		tokens.push(content);
 
-//		if (count == 0) {
-//			supply += 1;	
-//		} else {
-//			supply += count;
-//		}
-		emit Allocate(msg.sender, count, content);
+		emit Allocate(msg.sender, _token.count, _token.capped, content);
 		return true;
 	}
 
@@ -217,11 +214,9 @@ contract CraftNFT {
 		mintedToken[_content] = bytes32(right);
 		
 		tokenId = uint256(_content);
-		if (enumeration) {
-			_balance = balance[_recipient];
-			ownerIndexReverse[tokenId] = _balance;
-			tokenOfOwnerByIndex[_recipient][_balance] = tokenId;
-		}
+		_balance = balance[_recipient];
+		ownerIndexReverse[tokenId] = _balance;
+		tokenOfOwnerByIndex[_recipient][_balance] = tokenId;
 		balance[_recipient] += 1;
 		tokenByIndex.push(uint256(_content));
 
@@ -245,6 +240,22 @@ contract CraftNFT {
 		mintedToken[_k] = bytes32(_data);
 	}
 
+	// Apply cap on unbounded token
+	// if cap value is set to 0, cap will be set on the current count.
+	function setCap(bytes32 _content, uint16 _batch, uint48 _cap) public {
+		tokenSpec storage spec;
+
+		spec = token[_content][uint256(_batch)];
+		require(!spec.sparse, 'ERR_SPARSE');
+		require(!spec.capped, 'ERR_CAPPED');
+		if (_cap == 0) {
+			_cap = spec.cursor;
+		}
+		require(_cap >= spec.count, 'ERR_CAP_LOW');
+		spec.count = _cap;
+		spec.capped = true;
+	}
+
 	// Mint a token from a batch.
 	// Will fail if:
 	// * All tokens in the batch have already been minted
@@ -258,12 +269,14 @@ contract CraftNFT {
 		spec = token[_content][uint256(_batch)];
 
 		require(!spec.sparse, 'ERR_SPARSE');
-		if (_batch == 0 && spec.count == 0) {
+		require(msg.sender == owner || writer[msg.sender], 'ERR_ACCESS');
+		if (_batch == 0 && spec.count == 0 && spec.capped) {
 			spec.cursor += 1;
 			return mintTo(_recipient, _content);
 		}
-		require(msg.sender == owner || writer[msg.sender], 'ERR_ACCESS');
-		require(spec.cursor < spec.count);
+		if (spec.capped) {
+			require(spec.cursor < spec.count);
+		}
 		return mintBatchCore(_recipient, _content, _batch, spec.cursor, spec);
 	}
 
@@ -272,13 +285,14 @@ contract CraftNFT {
 	// If the index is not the next sequential index in the batch, the token will be marked as sparse.
 	// Sparse tokens cannot thereafter be minted using mintFromBatchTo
 	// The method will fail if the token at the specified index has already been minted, or if the index is out of bounds of the batch.
-	// This method cannot be used to mint a unique token.
+	// This method cannot be used to mint a unique token or an unbounded token.
 	function mintExactFromBatchTo(address _recipient, bytes32 _content, uint16 _batch, uint48 _index) public returns (bytes32) {
 		tokenSpec storage spec;
 
 		spec = token[_content][_batch];
 		require(msg.sender == owner || writer[msg.sender], 'ERR_ACCESS');
 		require(spec.count > 0);
+		require(spec.capped);
 		require(_index < spec.count);
 		return mintBatchCore(_recipient, _content, _batch, _index, spec);
 	}
@@ -309,13 +323,14 @@ contract CraftNFT {
 		right |= uint160(_recipient);
 
 		_spec.cursor += 1;
+		if (!_spec.capped) {
+			_spec.count += 1;
+		}
 		mintedToken[k] = bytes32(right);
 
-		if (enumeration) {
-			_balance = balance[_recipient];
-			ownerIndexReverse[left] = _balance;
-			tokenOfOwnerByIndex[_recipient][_balance] = left;
-		}
+		_balance = balance[_recipient];
+		ownerIndexReverse[left] = _balance;
+		tokenOfOwnerByIndex[_recipient][_balance] = left;
 
 		balance[_recipient] += 1;
 		tokenByIndex.push(left);
@@ -364,6 +379,7 @@ contract CraftNFT {
 	function transferCore(address _from, address _to, uint256 _tokenId) internal {
 		address currentTokenOwner;
 		uint256 reverseIndex;
+		uint256 currentIndex;
 
 		currentTokenOwner = this.ownerOf(_tokenId);
 
@@ -375,7 +391,14 @@ contract CraftNFT {
 		tokenAllowance[_tokenId] = address(0);
 		setTokenOwner(_tokenId, _to);
 		reverseIndex = ownerIndexReverse[_tokenId];
-		tokenOfOwnerByIndex[_from][reverseIndex] = uint256(0);
+		currentIndex = balance[_from] - 1;
+		if (currentIndex > reverseIndex) {
+			tokenOfOwnerByIndex[_from][reverseIndex] = tokenOfOwnerByIndex[_from][currentIndex];
+		}
+		tokenOfOwnerByIndex[_from][currentIndex] = uint256(0);
+
+		currentIndex = balance[_to];
+		tokenOfOwnerByIndex[_to][currentIndex] = _tokenId;
 
 		balance[_from] -= 1;
 		balance[_to] += 1;
