@@ -13,9 +13,11 @@ video.setAttribute('id', 'video');
 video.setAttribute('autoplay', true);
 video.setAttribute('playsinline', true);
 
-const STATUS_ERROR = 1;
-const STATUS_BUSY = 2;
-const STATUS_OK = 3;
+const STATUS_OK = 0;
+const STATUS_BUSY = 1;
+const STATUS_INFO = 2;
+const STATUS_WARN = 3;
+const STATUS_ERROR = 4;
 
 function setStatus(s, typ) {
 	const em = document.getElementById('statusText');
@@ -29,6 +31,12 @@ function setStatus(s, typ) {
 			break;
 		case STATUS_OK:
 			em.setAttribute('class', 'statusOk');
+			break;
+		case STATUS_INFO:
+			em.setAttribute('class', 'statusInfo');
+			break;
+		case STATUS_WARN:
+			em.setAttribute('class', 'statusWarn');
 			break;
 		default:
 			em.setAttribute('class', 'statusBusy');
@@ -205,39 +213,51 @@ var canvas;
 var ctx;
 
 // Load init
-function live() {
+function live(handler) {
 	initCamera();
 	canvas = document.getElementById('qr-canvas');
 	ctx = canvas.getContext('2d', { willReadFrequently: true });
-	scan();
+	setStatus('waiting for address', STATUS_INFO);
+	scan(handler);
 }
 
-function scan() {
-	setStatus('waiting for address', STATUS_BUSY);
+async function addressHandler(addr) {
+	const e = new CustomEvent('uistate', {
+		detail: {
+			delta: STATE.SCAN_RESULT,
+			settings: settings,
+		},
+		bubbles: true,
+		cancelable: true,
+		composed: false,
+	});
+	window.dispatchEvent(e);
+	setStatus('confirm address...', STATUS_BUSY);
+}
+
+function scanHandler(addr, handler) {
+	try {
+		settings.recipient = checkAddress(addr); 
+	} catch(e) {
+		console.error(e);
+		return false;
+	}
+	handler(settings.recipient);
+	return true;
+}
+
+function scan(handler) {
+	if (handler === undefined) {
+		handler = addressHandler;
+	}
 	ctx.drawImage(video, 0, 0, 400, 400);
 	const imageData = ctx.getImageData(0, 0, 400, 400).data;
 	const code = jsQR(imageData, 400, 400);
 	if (code) {
 		console.log("Found QR code", code);
-		try {
-			settings.recipient = checkAddress(code.data); 
-		} catch(e) {
-			console.error(e);
+		if (scanHandler(code.data, handler)) {
 			return;
 		}
-		const e = new CustomEvent('uistate', {
-			detail: {
-				delta: STATE.SCAN_RESULT,
-				settings: settings,
-			},
-			bubbles: true,
-			cancelable: true,
-			composed: false,
-		});
-		window.dispatchEvent(e);
-		setStatus('confirm address...', STATUS_BUSY);
-		return;
 	}
-	setTimeout(scan, 10);
+	setTimeout(scan, 10, handler);
 }
-

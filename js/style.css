@@ -8,7 +8,7 @@ div#start {
 }
 
 .statusBusy {
-	color: #ffa500;
+	color: #aaa;
 }
 
 .statusError {
@@ -23,6 +23,9 @@ div#start {
 	color: #00c;
 }
 
+.statusWarn {
+	color: #ffa500;
+}
 
 #scanConfirm,
 #scanReturn {

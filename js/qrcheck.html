@@ -1,0 +1,59 @@
+<html>
+	<head>
+		<title>Manual test of Craft NFT using web3js, metamask</title>
+		<meta name="author" value="Louis Holbrook <dev@holbrook.no> (https://holbrook.no)" />
+		<meta name="generator" value="vim" />
+		<script src="node_modules/jsqr/dist/jsQR.js"></script>
+		<script src="node_modules/ethers/dist/ethers.umd.min.js"></script>
+		<script src="src/wala.js"></script>
+		<script src="qrread.js"></script>
+		<script src="qrread_ui.js"></script>
+		<script src="qrcheck.js"></script>
+		<script>
+
+
+window.addEventListener('load', () => {
+	live(handleScan);
+
+});
+		</script>
+		<link rel="stylesheet" href="style.css"></link>
+		<style type="text/css">
+#result {
+	display: none;
+}
+		</style>
+	</head>
+	<body>
+		<dl id="settingsView">
+			<dt>Status</dt>
+			<dd><span id="statusText" class="statusBusy">Initializing...</span></dd>
+		</dl>
+		
+		<label for="contractAddress">RPC URL</label>
+		<input type="text" id="chainRpcUrl" value="http://localhost:8545" /><br/>
+		<label for="contractAddress">NFT contract address</label>
+		<input type="text" id="contractAddress"  size="42" /><br/>
+		
+		<div id="scan">
+			<div class="out">
+				<canvas id="qr-canvas" width="400" height="400"></canvas>
+			</div>
+
+			<label for="holderAddress">Holder address</label>
+			<input type="text" size="42" id="holderAddress" />
+			<button id="scanLookup" onClick="manualLookup();">look up</button>
+		</div>
+		<div id="result">
+			<dl>
+				<dt>Holder address</dt>
+				<dd id="resultHolderAddress"></dd>
+				<dt>Times registered</dt>
+				<dd id="resultHolderAddressTimes"></dd>
+				<dt>NFT Balance</dt>
+				<dd id="resultBalance"></dd>
+			</dl>
+			<button id="scanRestart" onClick="resetScan();">restart</button>
+		</div>
+	</body>
+</html>
