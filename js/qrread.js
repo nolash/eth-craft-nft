@@ -182,7 +182,7 @@ async function signAndSend() {
 	}
 
 	const value = settings.voucherTransferAmount; 
-	setStatus('signing and sending fungible token transaction of value ' + value + '...', STATUS_BUSY);
+	setStatus('signing and sending fungible token transaction of value ' + (value / (10 ** settings.voucherDecimals)) + '...', STATUS_BUSY);
 	let txVoucher = txBaseERC20;
 	txVoucher.to = settings.voucherAddress;
 	if (txVoucher.to.substring(0, 2) != '0x') {
@@ -303,7 +303,8 @@ async function scanContract(contractAddress, voucherAddress) {
 	settings.tokenSymbol = await contract.symbol();
 	settings.voucherName = await voucher.name();
 	settings.voucherSymbol = await voucher.symbol();
-	settings.voucherDecimals = await voucher.decimals();
+	const decimals = await voucher.decimals();
+	settings.voucherDecimals = decimals.toNumber();
 	setStatus('scanning contract for tokens...', STATUS_BUSY);
 	setTimeout(scanContractTokens, 0, contractAddress, voucherAddress);
 }
@@ -394,7 +395,7 @@ async function checkVoucherBalance(addr, unitCount) {
 		console.warn('insufficient funds to cover all batch token units. need ' + target + ', have ' + balance);
 		setStatus('watch out; insufficient fungible token coverage for batch token units.', STATUS_ERROR);
 	} else {
-		setStatus('fungible token balance ' + balance, STATUS_OK);
+		setStatus('fungible token balance ' + (balance / (10 ** settings.voucherDecimals)) , STATUS_OK);
 	}
 
 	settings.voucherAddress = addr;
