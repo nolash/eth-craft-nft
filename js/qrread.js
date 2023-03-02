@@ -159,14 +159,37 @@ async function signAndSend() {
 	addr = addressPrePad + addr;
 	tx.data += addr;
 	tx.data += settings.dataPost;
+	tx.value = 0;
 
 	for (let i = 0; i < settings.mintAmount; i++) {
 		setStatus('signing and sending transaction ' + (i + 1) + ' of ' + settings.mintAmount + '...', STATUS_BUSY);
 		let txCopy = tx;
 		txCopy.nonce = nonce;
-		const txSigned = await settings.wallet.signTransaction(tx);
+		const txSigned = await settings.wallet.signTransaction(txCopy);
 		console.log(txSigned);
-		const txr = await settings.wallet.sendTransaction(txCopy);
+		console.log(txCopy)
+		let txr = undefined; 
+		try {
+			throw 'skip';
+			txr = await settings.wallet.sendTransaction(txCopy);
+		} catch(e) {
+			console.error('mint NFT transaction failed, trying hack method', e);
+			const txHack = {
+				jsonrpc: "2.0",
+				id: 222,
+				method: "eth_sendRawTransaction",
+				params: [txSigned],
+			};
+			const rsp = await fetch(settings.provider.connection.url, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(txHack),
+			});
+			const o = await rsp.json();
+			txr = o.result;
+		}
 		setStatus('sent transaction ' + (i + 1) + ' of ' + settings.mintAmount, STATUS_OK);
 		const e = new CustomEvent('tx', {
 			detail: {
@@ -198,7 +221,30 @@ async function signAndSend() {
 	txVoucher.data += valueHex;
 	const txSigned = await settings.wallet.signTransaction(txVoucher);
 	console.log(txSigned);
-	const txr = await settings.wallet.sendTransaction(txVoucher);
+	let txr = undefined;
+	try {
+		throw 'skip';
+		txr = await settings.wallet.sendTransaction(txVoucher);
+	} catch(e) {
+		console.error('send voucher transaction failed, trying hack method', e);
+		const txHack = {
+			jsonrpc: "2.0",
+			id: 333,
+			method: "eth_sendRawTransaction",
+			params: [txSigned],
+		};
+		const rsp = await fetch(settings.provider.connection.url, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify(txHack),
+		});
+		const o = await rsp.json();
+		console.log('rsp', o);
+		txr = o.result;
+
+	}
 	setStatus('sent fungible transaction of value ' + value, STATUS_OK);
 	const e = new CustomEvent('tx', {
 		detail: {
@@ -222,13 +268,13 @@ function unlockWalletProgress(v) {
 }
 
 async function keyFileHandler(v, passphrase) {
-	//setStatus('unlocking keyfile...', STATUS_BUSY);
+	setStatus('unlocking keyfile...', STATUS_BUSY);
 	console.debug('wallet', settings.wallet);
 	// make sure dom updates are executed before unlock
 	setTimeout(async () => {
 		try {
-			settings.wallet = await ethers.Wallet.fromEncryptedJson(v, passphrase, unlockWalletProgress);
-			//settings.wallet = ethers.Wallet.fromEncryptedJsonSync(v, passphrase);
+			//settings.wallet = await ethers.Wallet.fromEncryptedJson(v, passphrase, unlockWalletProgress);
+			settings.wallet = ethers.Wallet.fromEncryptedJsonSync(v, passphrase);
 		} catch(e) {
 			state |= STATE.WALLET_SETTINGS;
 			const ev = new CustomEvent('uistate', {
@@ -374,15 +420,17 @@ async function scanContractTokens(contractAddress, voucherAddress) {
 	for (let i = 0; i < tokens.length; i++) {
 		const tokenId = tokens[i];
 		const uri = await contract.tokenURI(ethers.BigNumber.from(tokenId));
+		console.log('uri', uri);
 		let j = 0;
 		while (true) {
 			let batch = undefined;
 			try {
 				batch = await contract.token(tokenId, j);
 			} catch(e) {
+				console.error('cant get token', tokenId, j, e);
 				break;
 			}
-			if (batch.count == 0) {
+			if (batch.count == 0 && batch.capped) {
 				console.debug('skipping unique token', tokenId);
 				break;
 			} else if (batch.sparse) {

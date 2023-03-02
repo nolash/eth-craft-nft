@@ -152,9 +152,9 @@ window.addEventListener('tx', (e) => {
 	const ls = document.getElementById('txList');
 	const li = document.createElement('li');
 	const l = document.createElement('span');
-	l.innerHTML = e.detail.tx.hash;
+	l.innerHTML = e.detail.tx;
 	const r = document.createElement('span');
-	r.setAttribute('id', 'status.' + e.detail.tx.hash);
+	r.setAttribute('id', 'status.' + e.detail.tx);
 	r.setAttribute('class', 'statusBusy');
 	r.innerHTML = 'status: pending';
 	li.appendChild(l);
@@ -163,9 +163,9 @@ window.addEventListener('tx', (e) => {
 	watchTx(e.detail.tx, e.detail.serial);
 });
 
-async function watchTx(tx, i) {
-	const rcpt = await settings.provider.waitForTransaction(tx.hash);
-	const txRow = document.getElementById('status.' + tx.hash);
+async function watchTx(hsh, i) {
+	const rcpt = await settings.provider.waitForTransaction(hsh);
+	const txRow = document.getElementById('status.' + hsh);
 	console.debug('rcpt', rcpt);
 	settings.minedAmount++;
 	if (rcpt.status == 1) {
