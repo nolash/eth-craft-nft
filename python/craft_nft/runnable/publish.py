@@ -42,18 +42,18 @@ def process_config_local(config, arg, args, flags):
     config.add(args.name, '_TOKEN_NAME', False)
     config.add(args.symbol, '_TOKEN_SYMBOL', False)
 
-    declaration_hash = ZERO_CONTENT
-    if args.declaration_file != None:
-        f = open(args.declaration_file, 'r')
-        declaration = f.read()
-        f.close()
-        h = hashlib.sha256()
-        h.update(declaration.encode('utf-8'))
-        z = h.digest()
-        declaration_hash = z.hex()
-    declaration_hash = strip_0x(declaration_hash)
-    config.add(declaration_hash, '_TOKEN_DECLARATION̈́', False)
-    logg.debug('declaration hash is {}'.format(declaration_hash))
+#    declaration_hash = ZERO_CONTENT
+#    if args.declaration_file != None:
+#        f = open(args.declaration_file, 'r')
+#        declaration = f.read()
+#        f.close()
+#        h = hashlib.sha256()
+#        h.update(declaration.encode('utf-8'))
+#        z = h.digest()
+#        declaration_hash = z.hex()
+#    declaration_hash = strip_0x(declaration_hash)
+#    config.add(declaration_hash, '_TOKEN_DECLARATION̈́', False)
+#    logg.debug('declaration hash is {}'.format(declaration_hash))
     if args.fee_limit == None:
         config.add(CraftNFT.gas(), '_FEE_LIMIT', True)
 
@@ -85,7 +85,7 @@ logg.debug('settings loaded:\n{}'.format(settings))
 def main():
     token_name = config.get('_TOKEN_NAME')
     token_symbol = config.get('_TOKEN_SYMBOL')
-    token_declaration = config.get('_TOKEN_DECLARATION̈́')
+    #token_declaration = config.get('_TOKEN_DECLARATION̈́')
     conn = settings.get('CONN')
 
     c = CraftNFT(
