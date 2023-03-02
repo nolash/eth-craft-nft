@@ -60,8 +60,7 @@ const txBaseERC20 = {
 
 function checkAddress(addr) {
 	if (addr.length < 40) {
-		console.error('invalid ethereum address (too short)', addr);
-		return;
+		throw 'invalid ethereum address (too short): ' + addr;
 	}
 	if (addr.substring(0, 9) == "ethereum:") { // metamask qr
 		addr = addr.substring(9);

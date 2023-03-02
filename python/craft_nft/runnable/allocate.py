@@ -45,8 +45,11 @@ def process_config_local(config, arg, args, flags):
     bytes.fromhex(token_id)
     config.add(token_id, '_TOKEN_ID', False)
 
-    assert args.count < 2**48
-    config.add(args.count, '_TOKEN_COUNT', False)
+    if args.nolimit:
+        config.add(-1, '_TOKEN_COUNT', False)
+    else: 
+        assert args.count < 2**48
+        config.add(args.count, '_TOKEN_COUNT', False)
 
     if args.fee_limit == None:
         config.add(200000, '_FEE_LIMIT', True)
@@ -55,10 +58,11 @@ def process_config_local(config, arg, args, flags):
 
 arg_flags = ArgFlag()
 arg = Arg(arg_flags)
-flags = arg_flags.STD_WRITE | arg_flags.CREATE | arg_flags.VALUE | arg_flags.TAB | arg_flags.EXEC
+flags = arg_flags.STD_WRITE | arg_flags.VALUE | arg_flags.TAB | arg_flags.EXEC
 
 argparser = chainlib.eth.cli.ArgumentParser()
 argparser = process_args(argparser, arg, flags)
+argparser.add_argument('--nolimit', action='store_true', help='Unbounded token batch')
 argparser.add_argument('--count', default=0, type=int, help='Amount of tokens in batch')
 argparser.add_argument('token_id', type=str, nargs='*', help='token id: sha256 sum of token data, in hex')
 args = argparser.parse_args(sys.argv[1:])
