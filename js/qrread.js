@@ -463,6 +463,13 @@ async function scanTokenMetadata(tokenId) {
 	} else if (tokenId.substring(0, 2) == '0x') {
 		tokenId = tokenId.substring(2);
 	}
+
+	const imgWrap = document.getElementById('scanTokenMetaImage');
+	let img = imgWrap.lastChild;
+	if (img !== null) {
+		imgWrap.removeChild(img);
+	}
+
 	let r = undefined;
 	try {
 		r = await settings.metaInterface.get(tokenId);
@@ -470,13 +477,20 @@ async function scanTokenMetadata(tokenId) {
 		setStatus('metadata lookup failed', STATUS_ERROR);
 		document.getElementById('scanTokenMetaName').innerHTML = '(unavailable)';
 		document.getElementById('scanTokenMetaDescription').innerHTML = '(unavailable)';
+		document.getElementById('scanTokenMetaImage').innerHTML = '(unavailable)';
 		return;
 	}
+
 	const o = JSON.parse(r);
 	setStatus('found token metadata', STATUS_OK);
 	console.debug('metadata token', tokenId, o);
 	document.getElementById('scanTokenMetaName').innerHTML = o['name'];
 	document.getElementById('scanTokenMetaDescription').innerHTML = o['description'];
+
+	img = document.createElement('img');
+	img.src = o['image'];
+	img.style.height = '200px';
+	imgWrap.appendChild(img);
 }
 
 async function manualConfirmHandler(addr) {
