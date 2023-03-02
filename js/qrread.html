@@ -102,6 +102,15 @@ window.addEventListener('load', () => {
 		});
 		window.dispatchEvent(e);
 	});
+
+	document.getElementById('keyFileGenerate').addEventListener("click", (o) => {
+		//const btn = document.getElementById('keyFileGenerate');
+		//btn.setAttribute('disabled', 1);
+		document.getElementById('keyFile').value = null;
+		const passphrase = document.getElementById('keyFilePassword').value;
+		generateWallet(passphrase);
+	});
+
 	document.getElementById('scanManualMint').addEventListener("click", (o) => {
 		const addr = document.getElementById("scanAddress").value;
 		manualConfirmHandler(addr);
@@ -122,6 +131,7 @@ window.addEventListener('load', () => {
 			<textarea cols="80" rows="24" id="keyFile"></textarea>
 			<label for="keyFilePassword">Keyfile passphrase</label>
 			<input type="password" id="keyFilePassword" />
+			<button id="keyFileGenerate">generate wallet</button>
 			<button id="keyFileSubmit">unlock wallet</button>
 		</div>
 		<div class="pane" id="connect">

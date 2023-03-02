@@ -10,9 +10,12 @@ const STATE = {
 	SCAN_CONFIRM: 128,
 	SCAN_DONE: 256,
 	AIEE: 512,
+	WALLET_GENERATED: 1024,
+	WALLET_FAIL: 2048,
 };
 
 var settings = {
+	keyFile: undefined,
 	privateKey: undefined,
 	tokenAddress: undefined,
 	tokenId: undefined,
@@ -214,12 +217,33 @@ async function signAndSend() {
 	setStatus('verifying transactions...', STATUS_BUSY);
 }
 
+function unlockWalletProgress(v) {
+	setStatus("unlocking wallet: " + parseInt(v * 100) + "%", STATUS_BUSY);
+}
+
 async function keyFileHandler(v, passphrase) {
-	setStatus('unlocking keyfile...', STATUS_BUSY);
+	//setStatus('unlocking keyfile...', STATUS_BUSY);
 	console.debug('wallet', settings.wallet);
 	// make sure dom updates are executed before unlock
-	setTimeout(() => {
-		settings.wallet = ethers.Wallet.fromEncryptedJsonSync(v, passphrase);
+	setTimeout(async () => {
+		try {
+			settings.wallet = await ethers.Wallet.fromEncryptedJson(v, passphrase, unlockWalletProgress);
+		} catch(e) {
+			state |= STATE.WALLET_SETTINGS;
+			const ev = new CustomEvent('uistate', {
+				detail: {
+					delta: STATE.WALLET_FAIL,
+					settings: settings,
+				},
+				bubbles: true,
+				cancelable: true,
+				composed: false,
+			});
+			window.dispatchEvent(ev);
+			setStatus('keyfile unlock fail. wrong passphrase?', STATUS_ERROR);
+			console.error(e);
+			return;
+		}
 		state |= STATE.WALLET_SETTINGS;
 		const e = new CustomEvent('uistate', {
 			detail: {
@@ -486,6 +510,31 @@ async function requestHandler(tokenBatch, amount) {
 	const e = new CustomEvent('uistate', {
 		detail: {
 			delta: STATE.MINT,
+			settings: settings,
+		},
+		bubbles: true,
+		cancelable: true,
+		composed: false,
+	});
+	window.dispatchEvent(e);
+}
+
+function generateWalletProgress(v) {
+	setStatus('encrypting wallet for ' + settings.wallet.address + ": " + parseInt(v * 100) + "%", STATUS_BUSY);
+}
+
+async function generateWallet(passphrase) {
+	setStatus('generating new wallet', STATUS_BUSY);
+	const mn = await ethers.Wallet.createRandom();
+	const wallet = new ethers.Wallet(mn.privateKey);
+	settings.wallet = wallet;
+	const keyfile = await wallet.encrypt(passphrase, {}, generateWalletProgress);
+	settings.keyFile = keyfile;
+	console.debug('settings now', settings);
+	setStatus('generated new wallet: ' + settings.wallet.address + ". <blink>REMEMBER TO COPY AND STORE!</blink>", STATUS_OK);
+	const e = new CustomEvent('uistate', {
+		detail: {
+			delta: STATE.WALLET_GENERATED,
 			settings: settings,
 		},
 		bubbles: true,

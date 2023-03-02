@@ -46,6 +46,14 @@ function setStatus(s, typ) {
 window.addEventListener('uistate', (e) => {
 	console.debug('statechange', e);
 	switch (e.detail.delta) {
+		case STATE.WALLET_GENERATED:
+			document.getElementById("keyFile").value = e.detail.settings.keyFile;
+			break;
+		case STATE.WALLET_FAIL:
+			const btn = document.getElementById("keyFileSubmit");
+			btn.removeAttribute('disabled');
+			console.debug(btn);
+			break;
 		case STATE.WALLET_SETTINGS:
 			updateSettingsView('Wallet address', e.detail.settings.wallet.address);
 			document.getElementById("start").style.display = "none";
