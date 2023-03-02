@@ -227,8 +227,8 @@ async function keyFileHandler(v, passphrase) {
 	// make sure dom updates are executed before unlock
 	setTimeout(async () => {
 		try {
-			//settings.wallet = await ethers.Wallet.fromEncryptedJson(v, passphrase, unlockWalletProgress);
-			settings.wallet = ethers.Wallet.fromEncryptedJsonSync(v, passphrase);
+			settings.wallet = await ethers.Wallet.fromEncryptedJson(v, passphrase, unlockWalletProgress);
+			//settings.wallet = ethers.Wallet.fromEncryptedJsonSync(v, passphrase);
 		} catch(e) {
 			state |= STATE.WALLET_SETTINGS;
 			const ev = new CustomEvent('uistate', {
