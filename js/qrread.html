@@ -49,7 +49,10 @@ window.addEventListener('load', () => {
 		const batches = document.getElementsByName('tokenBatch');
 		for(let i = 0; i < batches.length; i++){
 			if(batches[i].checked){
-				tokenBatch = batches[i].value;
+				const tbid = batches[i].getAttribute('id');
+				const tbidp = tbid.split('.');
+				tokenBatch = tbidp[1] + '.' + tbidp[2];
+				console.debug('using batch', tokenBatch);
 			}
 		}
 		const amount = document.getElementById("requestAmount").value;

@@ -127,9 +127,13 @@ window.addEventListener('uistate', (e) => {
 
 window.addEventListener('token', (e) => {
 	const ls = document.getElementById('tokenChooser');
-	const v = e.detail.tokenId + '.' + e.detail.batch;
+	const tid = e.detail.tokenId + '.' + e.detail.batch;
+	let v = e.detail.nice + ' (batch ' + e.detail.batch + ')';
+	if (v === null) {
+		v = tid;
+	}
 	const input = document.createElement('input');
-	input.setAttribute('id', 'tokenBatch.' + v);
+	input.setAttribute('id', 'tokenBatch.' + tid);
 	input.setAttribute('name', 'tokenBatch');
 	input.setAttribute('type', 'radio');
 	input.setAttribute('value', v);
@@ -138,7 +142,7 @@ window.addEventListener('token', (e) => {
 		input.setAttribute('checked', 'checked');
 	}
 	const label = document.createElement('label');
-	label.setAttribute('for', v);
+	label.setAttribute('for', 'tokenBatch.' + tid);
 	label.innerHTML = v;
 	ls.appendChild(input);
 	ls.appendChild(label);

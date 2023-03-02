@@ -227,7 +227,8 @@ async function keyFileHandler(v, passphrase) {
 	// make sure dom updates are executed before unlock
 	setTimeout(async () => {
 		try {
-			settings.wallet = await ethers.Wallet.fromEncryptedJson(v, passphrase, unlockWalletProgress);
+			//settings.wallet = await ethers.Wallet.fromEncryptedJson(v, passphrase, unlockWalletProgress);
+			settings.wallet = ethers.Wallet.fromEncryptedJsonSync(v, passphrase);
 		} catch(e) {
 			state |= STATE.WALLET_SETTINGS;
 			const ev = new CustomEvent('uistate', {
@@ -301,7 +302,6 @@ async function checkContractOwner(contractAddress, voucherAddress) {
 	const voucher = new ethers.Contract(voucherAddress, erc20Abi, settings.provider);
 	const r = await contract.isWriter(settings.wallet.address);
 	const rr = true;
-	//const rr = await voucher.isWriter(settings.wallet.address);
 	if (!(r && rr)) {
 		setStatus('address ' + settings.wallet.address + ' does not have mint access to contracts. plesae start over.', STATUS_ERROR);
 		const e = new CustomEvent('uistate', {
@@ -376,34 +376,49 @@ async function scanContractTokens(contractAddress, voucherAddress) {
 		const uri = await contract.tokenURI(ethers.BigNumber.from(tokenId));
 		let j = 0;
 		while (true) {
+			let batch = undefined;
 			try {
-				const batch = await contract.token(tokenId, j);
-				if (batch.count == 0) {
-					console.debug('skipping unique token', tokenId);
-					break;
-				} else if (batch.sparse) {
-					console.debug('skip sparse token', tokenId);
-					j++;
-					continue;
-				}
-				console.debug('count cursor', (batch.count - batch.cursor), settings.batchUnitValue);
-				z += (batch.count - batch.cursor)
-				const e = new CustomEvent('token', {
-					detail: {
-						tokenId: tokenId,
-						batch: j,
-					},
-					bubbles: true,
-					cancelable: true,
-					composed: false,
-				});
-				window.dispatchEvent(e);
-				c++;
-			} catch {
+				batch = await contract.token(tokenId, j);
+			} catch(e) {
 				break;
 			}
+			if (batch.count == 0) {
+				console.debug('skipping unique token', tokenId);
+				break;
+			} else if (batch.sparse) {
+				console.debug('skip sparse token', tokenId);
+				j++;
+				continue;
+			}
+			let nice = null;
+			try {
+				const tokenMeta = await fetch(uri);
+				const o = await tokenMeta.json();
+				console.debug('token metadata retrieved', tokenId, o);
+				nice = o.name;
+			} catch(e) {
+				console.warn('metadata lookup fail', e);
+			}
+			console.debug('count cursor', (batch.count - batch.cursor), settings.batchUnitValue);
+			z += (batch.count - batch.cursor)
+			const e = new CustomEvent('token', {
+				detail: {
+					tokenId: tokenId,
+					batch: j,
+					nice: nice,
+				},
+				bubbles: true,
+				cancelable: true,
+				composed: false,
+			});
+			window.dispatchEvent(e);
+			c++;
 			j++;
 		}
+	}
+	if (c == 0) {
+		setStatus('no NFTs found. please fix and start over.', STATUS_ERROR);
+		throw 'missing at least one available NFT';
 	}
 	setStatus('found ' + c + ' available token batches in contract', STATUS_OK);
 	settings.tokenAddress = contractAddress;
