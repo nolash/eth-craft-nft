@@ -91,7 +91,7 @@ contract CraftNFT {
 		bytes8 codec;
 	}
 	// All registered multicodecs
-	mapping (uint256 => MultiHash) public multiCodecs;
+	mapping (uint256 => MultiHash) public multiHash;
 	uint256 msgCodec;
 	bytes currentMsg;
 
@@ -102,7 +102,7 @@ contract CraftNFT {
 		owner = msg.sender;
 		name = _name;
 		symbol = _symbol;
-		addCodec(32, 0x12, "sha256");
+		addMultiCodec(32, 0x12, "sha256");
 		setMsgCodec(0x12);
 		currentMsg = new bytes(32);
 	}
@@ -443,6 +443,7 @@ contract CraftNFT {
 		}
 	}
 
+	// Implements cic.Locator
 	function toURL(bytes memory _data) public view returns(string memory) {
 		bytes memory out;
 		bytes memory _hexDigest;
@@ -536,7 +537,7 @@ contract CraftNFT {
 	}
 
 	// Add a multicodec that can later be set as current codec
-	function addCodec(uint8 _length, uint64 _codecId, string memory _uriPrefix) public {
+	function addMultiCodec(uint8 _length, uint64 _codecId, string memory _uriPrefix) public {
 		bytes memory prefixBytes;
 
 		prefixBytes = bytes(_uriPrefix);
@@ -558,15 +559,15 @@ contract CraftNFT {
 		_hsh.prefix = bytes16(prefixBytes);
 		_hsh.l = _length;
 		
-		multiCodecs[uint256(_codecId)] = _hsh;
+		multiHash[uint256(_codecId)] = _hsh;
 	}
 
 	// Generate a multihash from the given digest and current selected multicodec
-	function toHash(bytes memory _digest) public view returns(bytes memory) {
+	function toMultiHash(uint256 _codec, bytes memory _digest) public view returns(bytes memory) {
 		MultiHash storage m;
 		bytes memory r;
 
-		m = multiCodecs[msgCodec];
+		m = multiHash[_codec];
 		r = new bytes(_digest.length + m.l + m.codecRLength);
 
 		uint256 i = 0;
@@ -584,6 +585,7 @@ contract CraftNFT {
 
 	// Generate a URI representing the digest and the string prefix representation
 	// of the currently selected multicodec
+	// Implements cic.Locator
 	function toURI(bytes memory _digest) public view returns(string memory) {
 		MultiHash storage m;
 
@@ -592,7 +594,7 @@ contract CraftNFT {
 	        uint256 l;
 	      
 	       	digestHex = toHex(_digest);	
-		m = multiCodecs[msgCodec];
+		m = multiHash[msgCodec];
 		l = m.prefixRLength;
 		codecString = new bytes(l + digestHex.length + 1);
 		for (uint256 i = 0; i < l; i++) {
@@ -639,7 +641,7 @@ contract CraftNFT {
 	function setMsgCodec(uint256 _codec) public {
 		MultiHash storage _hsh;
 
-		_hsh = multiCodecs[_codec];
+		_hsh = multiHash[_codec];
 		require(_hsh.l > 0);
 
 		msgCodec = _codec;
@@ -652,7 +654,7 @@ contract CraftNFT {
 	function setMsg(bytes memory _digest) public {
 		MultiHash storage _hsh;
 
-		_hsh = multiCodecs[msgCodec];
+		_hsh = multiHash[msgCodec];
 		require(_digest.length == _hsh.l);
 
 		currentMsg = _digest;
@@ -661,6 +663,16 @@ contract CraftNFT {
 
 	// Return a multihash of the latest persistent message
 	function getMsg() public view returns(bytes memory) {
-		return toHash(currentMsg);
+		return toMultiHash(msgCodec, currentMsg);
+	}
+
+	// implements ERC721Receiver
+	function onERC721Received(address _operator, address _from, uint256 _tokenId, bytes memory _data) external pure returns(bytes4) {
+		_operator;
+		_from;
+		_tokenId;
+		_data;
+
+		return bytes4(0x150b7a02);
 	}
 }
