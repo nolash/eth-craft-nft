@@ -19,6 +19,16 @@ contract CraftNFT {
 		bool capped;
 	}
 
+	// 0xc22876c3 - ERC721
+	// 0xd283ef1d - ERC721 (Metadata)
+	// 0xdd9d2087 - ERC721 (Enumerable)
+	// 0x150b7a02 - ERC721 (Receiver)
+	// 0x449a52f8 - Minter
+	// 0xabe1f1f5 - Writer
+	// 0xed75b333 - Locator
+	// 0xf0440c0f - Msg
+	uint256 constant interfaces = 0xc22876c3d283ef1ddd9d2087150b7a02449a52f8abe1f1f5ed75b333f0440c0f;
+
 	// The owner of the token contract.
 	// Only the owner may mint tokens.
 	address public owner;
@@ -103,7 +113,7 @@ contract CraftNFT {
 		name = _name;
 		symbol = _symbol;
 		addMultiCodec(32, 0x12, "sha256");
-		setMsgCodec(0x12);
+		msgCodec = 0x12;
 		currentMsg = new bytes(32);
 	}
 
@@ -513,33 +523,26 @@ contract CraftNFT {
 
 	// EIP-165
 	function supportsInterface(bytes4 interfaceID) external pure returns (bool) {
-		if (interfaceID == 0xc22876c3) { // EIP 721
+		uint32 interfaceN;
+		uint32 masked;
+
+		interfaceN = uint32(interfaceID);
+
+		// EIP165 interface id
+		if (uint32(interfaceID) ==  0x01ffc9a7) {
 			return true;
 		}
-		if (interfaceID == 0xd283ef1d) { // EIP 721 (Metadata - optional)
-			return true;
+
+		for (uint256 i = 0; i < 256; i += 32) {
+			masked = uint32((interfaces >> i) & 0xffffffff);
+			if (masked == 0) {
+				return false;
+			}
+			if (interfaceN == masked) {
+				return true;
+			}
 		}
-		if (interfaceID == 0xdd9d2087) { // EIP 721 (Enumerable - optional)
-			return true;
-		}
-		if (interfaceID == 0x150b7a02) { // EIP 721 (Receiver - optional)
-			return true;
-		}
-		if (interfaceID == 0x449a52f8) { // Minter
-			return true;
-		}
-		if (interfaceID == 0x01ffc9a7) { // EIP 165
-			return true;
-		}
-		if (interfaceID == 0xabe1f1f5) { // Writer
-			return true;
-		}
-		if (interfaceID == 0xed75b333) { // Locator
-			return true;
-		}
-		if (interfaceID == 0xf0440c0f) { // Msg
-			return true;
-		}
+
 		return false;
 	}
 

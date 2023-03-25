@@ -27,6 +27,7 @@ from hexathon import (
         )
 from chainlib.eth.tx import TxFormat
 from chainlib.eth.contract import ABIContractEncoder
+from eth_interface.unittest import TestERC165
 
 
 # local imports
@@ -45,7 +46,22 @@ hash_of_foo = '2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae'
 hash_of_bar = 'fcde2b2edba56bf408601fb721fe9b5c338d10ee429ea04fae5511b68fbf8fb9'
 
 
-class Test(TestCraftNFT):
+class Test(TestCraftNFT, TestERC165):
+
+    def setUp(self):
+        super(Test, self).setUp()
+        self.flush_interface_check()
+        for ifc in [
+            'ed75b333',
+            'abe1f1f5',
+            'f0440c0f',
+            '449a52f8',
+            '150b7a02',
+            'dd9d2087',
+            'd283ef1d',
+            'c22876c3',
+            ]:
+            self.add_interface_check(ifc)
 
     def test_allocate(self):
         nonce_oracle = RPCNonceOracle(self.accounts[0], self.rpc)

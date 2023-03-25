@@ -31,6 +31,7 @@ class TestCraftNFT(EthTesterCase):
         self.address = to_checksum_address(r['contract_address'])
 
 
+
 class TestCraftNFTEnumerated(EthTesterCase):
 
     def setUp(self):
