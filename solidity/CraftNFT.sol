@@ -1,6 +1,6 @@
 pragma solidity >= 0.8.0;
 
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: AGPL-3.0-or-later
 
 contract CraftNFT {
 	// Defines the behavior of a single token batch.
@@ -62,12 +62,6 @@ contract CraftNFT {
 
 	// ERC-721 (Metadata - optional)
 	string public symbol;
-
-	// The total Token Allocations across all tokens, regardless of whether they have been minted or not.
-	//uint256 supply;
-
-	// The digest of a human-readable resource that describes the rationale and terms for all tokens created by this contract.
-	//bytes32 public declaration;
 
 	// Editable base URI against which to look up token data by token id
 	bytes public baseURL;
