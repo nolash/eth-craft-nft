@@ -22,15 +22,16 @@ contract CraftNFT {
 	// 0xc22876c3 - ERC721
 	// 0xd283ef1d - ERC721 (Metadata)
 	// 0xdd9d2087 - ERC721 (Enumerable)
-	// 0x150b7a02 - ERC721 (Receiver)
 	// 0x449a52f8 - Minter
 	// 0xabe1f1f5 - Writer
 	// 0xed75b333 - Locator
 	// 0xf0440c0f - Msg
-	uint256 constant interfaces = 0xc22876c3d283ef1ddd9d2087150b7a02449a52f8abe1f1f5ed75b333f0440c0f;
+	// 0x982ab05d - Digest
+	uint256 constant interfaces = 0xc22876c3d283ef1ddd9d2087449a52f8abe1f1f5ed75b333f0440c0f982ab05d;
 
 	// The owner of the token contract.
 	// Only the owner may mint tokens.
+	// Implements ERC173
 	address public owner;
 
 	// Addresses with access to allocate and mint tokens..
@@ -48,7 +49,9 @@ contract CraftNFT {
 	// All Minted Tokens.
 	// Represents both Unique Tokens and Batch Tokens.
 	mapping(bytes32 => bytes32) public mintedToken;
-	// ERC721 - Enumerable - List of tokens in order of minting
+
+	// List of tokens in order of minting
+	// Implements ERC721Enumerable
 	uint256[] public tokenByIndex;
 
 	// Registry for the approve() method
@@ -57,33 +60,36 @@ contract CraftNFT {
 	// Registry for the setApprovalForAll() method
 	mapping(address => address) tokenOperator;
 
-	// ERC-721 (Metadata - optional)
+	// Implements ERC721Metadata
 	string public name;
 
-	// ERC-721 (Metadata - optional)
+	// Implements ERC721Metadata
 	string public symbol;
 
 	// Editable base URI against which to look up token data by token id
 	bytes public baseURL;
 
 	// Enumerated index of all owned tokens
+	// Implements ERC721Enumerable
 	mapping ( address => mapping ( uint256 => uint256 ) ) public tokenOfOwnerByIndex;
 	mapping ( uint256 => uint256 ) ownerIndexReverse;
 	mapping ( address => uint256 ) balance;
 
-	// ERC-721
+	// Implements ERC721
 	event Transfer(address indexed _from, address indexed _to, uint256 indexed _tokenId);
-	// ERC-721
+	// Implements ERC721
 	event Approval(address indexed _owner, address indexed _approved, uint256 indexed _tokenId);
-	// ERC-721
+	// Implements ERC721
 	event ApprovalForAll(address indexed _owner, address indexed _operator, bool _approved);
-	// ERC-721
 	event TransferWithData(address indexed _from, address indexed _to, uint256 indexed _tokenId, bytes32 _data);
 
-	// Minter
+	// Implements Minter
 	event Mint(address indexed _minter, address indexed _beneficiary, uint256 _value);
 
 	event Allocate(address indexed _minter, uint48 indexed _count, bool indexed _capped, bytes32 _tokenId);
+
+	// Implements ERC173
+	event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
 	// Content hashes
 	// Represents a multicodec item
@@ -96,10 +102,11 @@ contract CraftNFT {
 	}
 	// All registered multicodecs
 	mapping (uint256 => MultiHash) public multiHash;
-	uint256 msgCodec;
 	bytes currentMsg;
+	// Implements Digest
+	uint256 public defaultDigestEncoding;
 
-
+	// Implements Msg
 	event Msg(bytes _multiHash);
 
 	constructor(string memory _name, string memory _symbol) {
@@ -107,7 +114,7 @@ contract CraftNFT {
 		name = _name;
 		symbol = _symbol;
 		addMultiCodec(32, 0x12, "sha256");
-		msgCodec = 0x12;
+		defaultDigestEncoding = 0x12;
 		currentMsg = new bytes(32);
 	}
 
@@ -115,8 +122,12 @@ contract CraftNFT {
 	//
 	// If _final is true, future ownership transfers will not be permitted.
 	function transferOwnership(address _newOwner) public returns(bool) {
+		address oldOwner;
+
 		require(msg.sender == owner);
+		oldOwner = owner;
 		owner = _newOwner;
+		emit OwnershipTransferred(oldOwner, owner);
 		return true;
 	}
 
@@ -203,7 +214,7 @@ contract CraftNFT {
 //	}
 
 	// Mint a unique token. The method will fail if the token was allocated as a batch.
-	function mintTo(address _recipient, bytes32 _content) public returns (bytes32) {
+	function mintToBytes(address _recipient, bytes32 _content) public returns (bytes32) {
 		uint256 right;
 		uint256 tokenId;
 		uint256 _balance;
@@ -212,7 +223,7 @@ contract CraftNFT {
 		require(token[_content].length == 1);
 		require(token[_content][0].count == 0);
 		require(mintedToken[_content] == bytes32(0x00));
-		
+
 		right = uint160(_recipient);
 		right |= (3 << 254);
 		mintedToken[_content] = bytes32(right);
@@ -222,11 +233,31 @@ contract CraftNFT {
 		ownerIndexReverse[tokenId] = _balance;
 		tokenOfOwnerByIndex[_recipient][_balance] = tokenId;
 		balance[_recipient] += 1;
-		tokenByIndex.push(uint256(_content));
+		tokenByIndex.push(tokenId); //int256(_content));
 
 		emit Mint(msg.sender, _recipient, tokenId);
 
 		return _content;
+	}
+
+	// Proxy for mintToBytes
+	// Implements Minter
+	function mintTo(address _recipient, uint256 _contentNumeric) public returns (bytes32) {
+		bytes32 _content;
+		_content = bytes32(_contentNumeric);
+		return mintToBytes(_recipient, _content);
+	}
+
+	// Implements Minter
+	function mint(address _recipient, uint256 _tokenId, bytes calldata _data) public {
+		_data;
+		mintTo(_recipient, _tokenId);
+	}
+
+	// Implements Minter
+	function safeMint(address _recipient, uint256 _tokenId, bytes calldata _data) public {
+		_data;
+		mintTo(_recipient, _tokenId);
 	}
 
 	// Apply the token owner to the token content data.
@@ -276,7 +307,7 @@ contract CraftNFT {
 		require(msg.sender == owner || writer[msg.sender], 'ERR_ACCESS');
 		if (_batch == 0 && spec.count == 0 && spec.capped) {
 			spec.cursor += 1;
-			return mintTo(_recipient, _content);
+			return mintToBytes(_recipient, _content);
 		}
 		if (spec.capped) {
 			require(spec.cursor < spec.count);
@@ -344,12 +375,12 @@ contract CraftNFT {
 		return k;
 	}
 	
-	// ERC-721
+	// Implements ERC721
 	function balanceOf(address _owner) external view returns (uint256) {
 		return balance[_owner];
 	}	
 
-	// ERC-721
+	// Implements ERC721
 	function setApprovalForAll(address _operator, bool _approved) external {
 		if (_approved) {
 			require(tokenOperator[msg.sender] == address(0)); // save a few bucks in gas if fail
@@ -361,17 +392,17 @@ contract CraftNFT {
 		emit ApprovalForAll(msg.sender, _operator, _approved);
 	}
 
-	// ERC-721
+	// Implements ERC721
 	function getApproved(uint256 _tokenId) external view returns (address) {
 		return tokenAllowance[_tokenId];
 	}
 
-	// ERC-721
+	// Implements ERC721
 	function isApprovedForAll(address _owner, address _operator) external view returns (bool) {
 		return tokenOperator[_owner] == _operator;
 	}
 
-	// ERC-721
+	// Implements ERC721
 	function ownerOf(uint256 _tokenId) external view returns (address) {
 		bytes32 _tokenContent;
 
@@ -408,20 +439,20 @@ contract CraftNFT {
 		balance[_to] += 1;
 	}
 
-	// ERC-721
+	// Implements ERC721
 	function transferFrom(address _from, address _to, uint256 _tokenId) external payable {
 		transferCore(_from, _to, _tokenId);
 		emit Transfer(_from, _to, _tokenId);
 	}
 
-	// ERC-721
+	// Implements ERC721
 	function safeTransferFrom(address _from, address _to, uint256 _tokenId, bytes memory _data) external payable {
 		transferCore(_from, _to, _tokenId);
 		emit Transfer(_from, _to, _tokenId);
-		emit TransferWithData(_from, _to, _tokenId, bytes32(_data)); //tokenData[_tokenId][tokenData[_tokenId].length-1]);
+		emit TransferWithData(_from, _to, _tokenId, bytes32(_data));
 	}
 
-	// ERC-721
+	// Implements ERC721
 	function safeTransferFrom(address _from, address _to, uint256 _tokenId) external payable {
 		transferCore(_from, _to, _tokenId);
 		emit Transfer(_from, _to, _tokenId);
@@ -447,7 +478,7 @@ contract CraftNFT {
 		}
 	}
 
-	// Implements cic.Locator
+	// Implements Locator
 	function toURL(bytes memory _data) public view returns(string memory) {
 		bytes memory out;
 		bytes memory _hexDigest;
@@ -493,7 +524,7 @@ contract CraftNFT {
 		return out;
 	}
 
-	// ERC-721 (Metadata - optional)
+	// Implements ERC721Metadata
 	function tokenURI(uint256 _tokenId) public view returns (string memory) {
 		bytes32 _tokenIdBytesFixed;
 		bytes memory _tokenIdBytes;
@@ -540,7 +571,7 @@ contract CraftNFT {
 		return false;
 	}
 
-	// ERC-721
+	// Implements ERC721Enumerable
 	function totalSupply() public view returns(uint256) {
 		return tokenByIndex.length;
 	}
@@ -572,7 +603,8 @@ contract CraftNFT {
 	}
 
 	// Generate a multihash from the given digest and current selected multicodec
-	function toMultiHash(uint256 _codec, bytes memory _digest) public view returns(bytes memory) {
+	// Implements Digest
+	function encodeDigest(bytes memory _digest, uint256 _codec) public view returns(bytes memory) {
 		MultiHash storage m;
 		bytes memory r;
 
@@ -592,9 +624,14 @@ contract CraftNFT {
 		return r;
 	}
 
+	// Implements Digest
+	function encodeDigest(bytes memory _digest) public view returns(bytes memory) {
+		return encodeDigest(_digest, defaultDigestEncoding);
+	}
+
 	// Generate a URI representing the digest and the string prefix representation
 	// of the currently selected multicodec
-	// Implements cic.Locator
+	// Implements Locator
 	function toURI(bytes memory _digest) public view returns(string memory) {
 		MultiHash storage m;
 
@@ -603,7 +640,7 @@ contract CraftNFT {
 	        uint256 l;
 	      
 	       	digestHex = toHex(_digest);	
-		m = multiHash[msgCodec];
+		m = multiHash[defaultDigestEncoding];
 		l = m.prefixRLength;
 		codecString = new bytes(l + digestHex.length + 1);
 		for (uint256 i = 0; i < l; i++) {
@@ -653,17 +690,17 @@ contract CraftNFT {
 		_hsh = multiHash[_codec];
 		require(_hsh.l > 0);
 
-		msgCodec = _codec;
+		defaultDigestEncoding = _codec;
 		currentMsg = new bytes(_hsh.l);
 
-		emit Msg(getMsg());
+		//emit Msg(getMsg());
 	}
 
 	// Set the latest pesistent message on contract
 	function setMsg(bytes memory _digest) public {
 		MultiHash storage _hsh;
 
-		_hsh = multiHash[msgCodec];
+		_hsh = multiHash[defaultDigestEncoding];
 		require(_digest.length == _hsh.l);
 
 		currentMsg = _digest;
@@ -671,17 +708,9 @@ contract CraftNFT {
 	}
 
 	// Return a multihash of the latest persistent message
+	// Implements Msg
 	function getMsg() public view returns(bytes memory) {
-		return toMultiHash(msgCodec, currentMsg);
-	}
-
-	// implements ERC721Receiver
-	function onERC721Received(address _operator, address _from, uint256 _tokenId, bytes memory _data) external pure returns(bytes4) {
-		_operator;
-		_from;
-		_tokenId;
-		_data;
-
-		return bytes4(0x150b7a02);
+		//return toMultiHash(defaultDigestEncoding, currentMsg);
+		return encodeDigest(currentMsg);
 	}
 }

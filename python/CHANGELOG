@@ -1,3 +1,5 @@
+- 0.2.0
+	* Implement Digest interface
 - 0.1.0
 	* Change version
 	* Slim down EIP165 interface check
