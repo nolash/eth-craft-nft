@@ -484,7 +484,7 @@ contract CraftNFT {
 		bytes memory _hexDigest;
 		uint256 c;
 
-		_hexDigest = getDigestHex(_data);
+		_hexDigest = toHex(_data);
 	
 		c = baseURL.length;
 		out = new bytes(_hexDigest.length + c);
@@ -499,7 +499,9 @@ contract CraftNFT {
 		return string(out);
 	}
 
-	function getDigestHex(bytes memory _data) public pure returns(bytes memory) {
+	// TODO: move to internal library method
+	// bytes to hex conversion
+	function toHex(bytes memory _data) public pure returns(bytes memory) {
 		bytes memory out;
 		uint8 t;
 		uint256 c;
@@ -656,32 +658,6 @@ contract CraftNFT {
 
 	}
 
-	// TODO: move to internal library method
-	// bytes to hex conversion
-	function toHex(bytes memory _data) public pure returns(bytes memory) {
-		bytes memory out;
-		uint8 t;
-		uint256 c;
-
-		out = new bytes(_data.length * 2);
-		c = 0;
-		for (uint256 i = 0; i < 32; i++) {
-			t = (uint8(_data[i]) & 0xf0) >> 4;
-			if (t < 10) {
-				out[c] = bytes1(t + 0x30);
-			} else {
-				out[c] = bytes1(t + 0x57);
-			}
-			t = uint8(_data[i]) & 0x0f;
-			if (t < 10) {
-				out[c+1] = bytes1(t + 0x30);
-			} else {
-				out[c+1] = bytes1(t + 0x57);
-			}
-			c += 2;
-		}
-		return out;
-	}
 
 	// Set the current multicodec to use for multihash generation
 	function setMsgCodec(uint256 _codec) public {
@@ -710,7 +686,6 @@ contract CraftNFT {
 	// Return a multihash of the latest persistent message
 	// Implements Msg
 	function getMsg() public view returns(bytes memory) {
-		//return toMultiHash(defaultDigestEncoding, currentMsg);
 		return encodeDigest(currentMsg);
 	}
 }
